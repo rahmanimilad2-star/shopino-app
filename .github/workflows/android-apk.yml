@@ -1,0 +1,97 @@
+
+name: Shopino Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      website_url:
+        description: "Public HTTPS URL of the Shopino website"
+        required: true
+        type: string
+      app_name:
+        description: "Android app name"
+        required: true
+        default: "Shopino"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Validate website URL
+        env:
+          WEBSITE_URL: ${{ inputs.website_url }}
+        run: |
+          node -e '
+          const u = new URL(process.env.WEBSITE_URL);
+          if (u.protocol !== "https:") {
+            console.error("Website URL must use HTTPS.");
+            process.exit(1);
+          }
+          console.log("Website URL format is valid.");
+          '
+
+      - name: Install dependencies
+        run: |
+          npm install --no-save --package-lock=false @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Configure Capacitor
+        env:
+          WEBSITE_URL: ${{ inputs.website_url }}
+          APP_NAME: ${{ inputs.app_name }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const url = new URL(process.env.WEBSITE_URL);
+          fs.writeFileSync('capacitor.config.json', JSON.stringify({
+            appId: 'ir.shopino.app',
+            appName: process.env.APP_NAME || 'Shopino',
+            webDir: 'dist',
+            server: {
+              url: url.origin,
+              cleartext: false,
+              androidScheme: 'https'
+            }
+          }, null, 2));
+          NODE
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Android project
+        run: npx cap sync android
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: shopino-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
