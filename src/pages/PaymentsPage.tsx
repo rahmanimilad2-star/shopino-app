@@ -158,16 +158,15 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
     );
   };
 
-  const inputClass =
-    'mt-1 h-10 min-h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+  const inputClass = 'shopino-input mt-1 w-full px-3';
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="no-print flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center">
+      <div className="no-print shopino-glass-card flex flex-col justify-between gap-4 rounded-xl p-5 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t.nav.payments}</h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">{t.nav.payments}</h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
             {lang === 'fa'
               ? 'ثبت دریافت وجه از مشتریان، مشاهده بدهی‌های باز و سررسیدگذشته و چاپ رسید پرداخت'
               : 'Record customer payments in Toman, track outstanding debts, and print receipts.'}
@@ -203,17 +202,17 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
       {/* Main Two-Column Grid: Record Payment Form + Customers with Outstanding Debts */}
       <div className="no-print grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Record Payment Card (5 cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 lg:col-span-5">
-          <div className="flex items-center gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
-            <CreditCard className="h-4 w-4 text-blue-600" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+        <div className="shopino-glass-card rounded-xl p-5 lg:col-span-5">
+          <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3 dark:border-slate-800">
+            <CreditCard className="h-4 w-4 text-[#0d9488] dark:text-[#20D6C2]" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
               {t.common.recordPayment}
             </h2>
           </div>
 
           <form onSubmit={handleRecordPayment} className="mt-4 space-y-3.5 text-xs">
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'انتخاب مشتری *' : 'Select Customer *'}
               </label>
               <select
@@ -242,7 +241,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
             {customerOpenOrders.length > 0 && (
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'بابت فاکتور مشخص (اختیاری)' : 'Link to Specific Order (Optional)'}
                 </label>
                 <select
@@ -271,9 +270,9 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
             )}
 
             {/* Balance Before & After Payment Box */}
-            <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700/60 dark:bg-[#0B1220]/75">
               <div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
                   {lang === 'fa' ? 'بدهی قبل از پرداخت:' : 'Debt Before Payment:'}
                 </div>
                 <div className="mt-1 font-mono text-sm font-bold text-amber-600 tabular-nums dark:text-amber-400">
@@ -281,7 +280,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                 </div>
               </div>
               <div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
                   {lang === 'fa' ? 'مانده بدهی پس از پرداخت:' : 'Remaining Debt After:'}
                 </div>
                 <div className="mt-1 font-mono text-sm font-bold text-emerald-600 tabular-nums dark:text-emerald-400">
@@ -292,7 +291,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'مبلغ دریافتی (تومان) *' : 'Amount (TOMAN) *'}
                 </label>
                 <input
@@ -305,7 +304,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                 />
               </div>
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'روش پرداخت' : 'Payment Method'}
                 </label>
                 <select
@@ -324,7 +323,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'شماره پیگیری / فیش' : 'Tracking #'}
                 </label>
                 <input
@@ -335,7 +334,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                 />
               </div>
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {t.common.notes}
                 </label>
                 <input
@@ -360,9 +359,9 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
         </div>
 
         {/* Customers with Outstanding Debts & Overdue Invoices (7 cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 lg:col-span-7">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+        <div className="shopino-glass-card rounded-xl p-5 lg:col-span-7">
+          <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 dark:border-slate-800">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
               {lang === 'fa'
                 ? 'فهرست بدهی‌های باز و فاکتورهای سررسیدگذشته مشتریان'
                 : 'Outstanding Customer Debts & Overdue Balances'}
@@ -370,7 +369,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
           </div>
 
           {openOrders.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-500">
+            <div className="py-12 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
               {lang === 'fa'
                 ? 'هیچ فاکتور بدهکار یا نسیه‌ای وجود ندارد.'
                 : 'No unpaid credit sales found.'}
@@ -378,7 +377,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
           ) : (
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-start text-xs">
-                <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
+                <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]">
                   <tr>
                     <th className="px-3 py-2.5 text-start">{lang === 'fa' ? 'مشتری' : 'Customer'}</th>
                     <th className="px-3 py-2.5 text-start">{lang === 'fa' ? 'فاکتور' : 'Order'}</th>
@@ -387,30 +386,30 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                     <th className="px-3 py-2.5 text-end">{t.common.actions}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                   {openOrders.map((o) => (
-                    <tr key={o.id}>
+                    <tr key={o.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-[#16233B]/45">
                       <td className="px-3 py-3">
                         <button
                           onClick={() => navigate(`/customers/${o.customer_id}`)}
-                          className="font-bold text-slate-900 hover:text-blue-600 dark:text-white"
+                          className="font-bold text-slate-900 transition-colors hover:text-[#0d9488] dark:text-[#F1F5F9] dark:hover:text-[#20D6C2]"
                         >
                           {o.customer_name}
                         </button>
-                        <div className="font-mono text-[11px] text-slate-400">
+                        <div className="font-mono text-[11px] text-slate-400 dark:text-[#94A3B8]">
                           {o.customer_phone || ''}
                         </div>
                       </td>
                       <td className="px-3 py-3">
                         <button
                           onClick={() => navigate(`/orders/${o.id}`)}
-                          className="font-mono font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                          className="font-mono font-semibold text-[#0d9488] hover:underline dark:text-[#20D6C2]"
                         >
                           {o.order_number}
                         </button>
                       </td>
                       <td className="px-3 py-3">
-                        <div className="font-mono text-slate-600 dark:text-slate-300">
+                        <div className="font-mono text-slate-600 dark:text-[#94A3B8]">
                           {formatDate(o.due_date, lang, settings.usePersianCalendar)}
                         </div>
                         {o.is_overdue && (
@@ -446,9 +445,9 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
       </div>
 
       {/* Payment History Table */}
-      <div className="no-print overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div className="no-print shopino-table-card overflow-hidden rounded-xl">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
             {lang === 'fa' ? 'تاریخچه مبالغ دریافتی' : 'Payment History'}
           </h2>
 
@@ -456,7 +455,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
             <select
               value={customerFilter}
               onChange={(e) => setCustomerFilter(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+              className="shopino-input px-3"
             >
               <option value="all">{lang === 'fa' ? 'همه مشتریان' : 'All Customers'}</option>
               {customers.map((c) => (
@@ -469,7 +468,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
             <select
               value={methodFilter}
               onChange={(e) => setMethodFilter(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+              className="shopino-input px-3"
             >
               <option value="all">{lang === 'fa' ? 'همه روش‌های پرداخت' : 'All Methods'}</option>
               {Object.entries(t.paymentMethod).map(([k, v]) => (
@@ -483,25 +482,29 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-2.5 font-mono dark:border-slate-700 dark:bg-slate-800"
+              className="shopino-input px-2.5 font-mono"
             />
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-2.5 font-mono dark:border-slate-700 dark:bg-slate-800"
+              className="shopino-input px-2.5 font-mono"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.loading}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.loading}
+          </div>
         ) : filteredPayments.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.noRecords}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.noRecords}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-start text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
+              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]">
                 <tr>
                   <th className="px-4 py-3 text-start">{lang === 'fa' ? 'شماره رسید' : 'Receipt #'}</th>
                   <th className="px-4 py-3 text-start">{t.common.date}</th>
@@ -512,28 +515,31 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                   <th className="px-4 py-3 text-end">{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/80">
                 {filteredPayments.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    <td className="px-4 py-3 font-mono font-bold text-slate-900 dark:text-white">
+                  <tr
+                    key={p.id}
+                    className="transition-colors hover:bg-slate-50 dark:hover:bg-[#16233B]/60"
+                  >
+                    <td className="px-4 py-3 font-mono font-bold text-slate-900 dark:text-[#F1F5F9]">
                       {p.payment_number}
                     </td>
-                    <td className="px-4 py-3 font-mono text-slate-500">
+                    <td className="px-4 py-3 font-mono text-slate-500 dark:text-[#94A3B8]">
                       {formatDate(p.payment_date, lang, settings.usePersianCalendar)}
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-[#F1F5F9]">
                       {p.customer_name}
                     </td>
-                    <td className="px-4 py-3 font-mono text-blue-600 dark:text-blue-400">
+                    <td className="px-4 py-3 font-mono text-[#0d9488] dark:text-[#20D6C2]">
                       {p.order_number || '—'}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 dark:text-[#F1F5F9]">
                       <div>
                         {t.paymentMethod[p.payment_method as keyof typeof t.paymentMethod] ||
                           p.payment_method}
                       </div>
                       {p.reference_number && (
-                        <div className="font-mono text-[11px] text-slate-400">
+                        <div className="font-mono text-[11px] text-slate-400 dark:text-[#94A3B8]">
                           {p.reference_number}
                         </div>
                       )}
@@ -546,7 +552,7 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                         type="button"
                         onClick={() => setPrintReceipt(p)}
                         title={t.common.print}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-[#20D6C2]/40 hover:bg-slate-100 hover:text-[#0d9488] dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:border-[#20D6C2]/40 dark:hover:bg-[#16233B] dark:hover:text-[#20D6C2]"
                       >
                         <Printer className="h-4 w-4" />
                       </button>
@@ -561,38 +567,42 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
       {/* Printable Payment Receipt Modal */}
       {printReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-          <div className="print-container w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="no-print mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050912]/70 p-4 backdrop-blur-xs">
+          <div className="print-container shopino-glass-modal w-full max-w-md rounded-xl p-6">
+            <div className="no-print mb-4 flex items-center justify-between border-b border-slate-200/80 pb-3 dark:border-slate-800">
+              <span className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'رسید دریافت وجه' : 'Payment Receipt'}
               </span>
               <button onClick={() => setPrintReceipt(null)}>
-                <X className="h-4 w-4 text-slate-500" />
+                <X className="h-4 w-4 text-slate-500 dark:text-[#94A3B8]" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
               <div className="border-b border-slate-200 pb-3 text-center dark:border-slate-800">
-                <div className="text-base font-bold text-slate-900 dark:text-white">
+                <div className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? settings.businessNameFa : settings.businessName}
                 </div>
-                <div className="mt-1 font-mono text-sm font-bold text-emerald-600">
+                <div className="mt-1 font-mono text-sm font-bold text-emerald-600 dark:text-[#20D6C2]">
                   {printReceipt.payment_number}
                 </div>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">{t.common.date}:</span>
+                <span className="text-slate-500 dark:text-[#94A3B8]">{t.common.date}:</span>
                 <span className="font-mono">
                   {formatDate(printReceipt.payment_date, lang, settings.usePersianCalendar)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">{lang === 'fa' ? 'پرداخت‌کننده:' : 'Customer:'}</span>
+                <span className="text-slate-500 dark:text-[#94A3B8]">
+                  {lang === 'fa' ? 'پرداخت‌کننده:' : 'Customer:'}
+                </span>
                 <span className="font-bold">{printReceipt.customer_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">{lang === 'fa' ? 'روش پرداخت:' : 'Method:'}</span>
+                <span className="text-slate-500 dark:text-[#94A3B8]">
+                  {lang === 'fa' ? 'روش پرداخت:' : 'Method:'}
+                </span>
                 <span>
                   {t.paymentMethod[printReceipt.payment_method as keyof typeof t.paymentMethod] ||
                     printReceipt.payment_method}
@@ -600,11 +610,13 @@ export const PaymentsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
               </div>
               {printReceipt.reference_number && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500">{lang === 'fa' ? 'شماره پیگیری:' : 'Reference:'}</span>
+                  <span className="text-slate-500 dark:text-[#94A3B8]">
+                    {lang === 'fa' ? 'شماره پیگیری:' : 'Reference:'}
+                  </span>
                   <span className="font-mono">{printReceipt.reference_number}</span>
                 </div>
               )}
-              <div className="flex justify-between border-t border-slate-200 pt-3 text-sm font-bold text-emerald-600 dark:border-slate-800">
+              <div className="flex justify-between border-t border-slate-200 pt-3 text-sm font-bold text-emerald-600 dark:border-slate-800 dark:text-emerald-400">
                 <span>{lang === 'fa' ? 'مبلغ دریافت‌شده:' : 'Amount Received:'}</span>
                 <span className="font-mono">{formatCurrency(printReceipt.amount, lang)}</span>
               </div>

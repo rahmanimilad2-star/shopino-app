@@ -81,7 +81,11 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
   const BackIcon = dir === 'rtl' ? ArrowRight : ArrowLeft;
 
   if (loading || !data) {
-    return <div className="p-8 text-center text-xs text-slate-500">{t.common.loading}</div>;
+    return (
+      <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+        {t.common.loading}
+      </div>
+    );
   }
 
   const c = data.customer;
@@ -98,7 +102,7 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
       <div className="no-print flex flex-wrap items-center justify-between gap-4">
         <button
           onClick={() => navigate('/customers')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 transition-colors hover:text-slate-900 dark:text-[#94A3B8] dark:hover:text-[#F1F5F9]"
         >
           <BackIcon className="h-4 w-4" />
           <span>{t.common.backToList}</span>
@@ -116,11 +120,11 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
 
       {/* Printable Customer Header & Summary */}
       <div className="print-container space-y-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <div className="shopino-glass-card rounded-xl p-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{c.name}</h1>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">{c.name}</h1>
                 <StatusBadge
                   label={
                     c.customer_type === 'wholesale' ? t.customerType.wholesale : t.customerType.retail
@@ -128,17 +132,19 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
                   tone={c.customer_type === 'wholesale' ? 'info' : 'neutral'}
                 />
               </div>
-              <div className="mt-1.5 text-xs text-slate-500">
+              <div className="mt-1.5 text-xs text-slate-500 dark:text-[#94A3B8]">
                 <span className="font-mono">{c.code}</span>
                 {c.phone && <span className="font-mono"> · {c.phone}</span>}
                 {c.address && <span> · {c.address}</span>}
               </div>
-              {c.notes && <div className="mt-1 text-xs text-slate-400">{c.notes}</div>}
+              {c.notes && (
+                <div className="mt-1 text-xs text-slate-400 dark:text-[#94A3B8]/80">{c.notes}</div>
+              )}
             </div>
 
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-500 dark:text-[#94A3B8]">
               {lang === 'fa' ? 'آخرین فعالیت:' : 'Latest Activity:'}{' '}
-              <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+              <span className="font-mono font-semibold text-slate-800 dark:text-[#F1F5F9]">
                 {formatDate(c.last_activity || c.created_at, lang, settings.usePersianCalendar)}
               </span>
             </div>
@@ -168,8 +174,8 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
         </div>
 
         {/* Register Payment Against Customer Balance */}
-        <div className="no-print rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+        <div className="no-print shopino-glass-card rounded-xl p-5">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
             {lang === 'fa'
               ? 'ثبت دریافت وجه از این مشتری (کسر از بدهی)'
               : 'Record Payment From Customer'}
@@ -177,7 +183,7 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
           <form onSubmit={handleRecordPayment} className="mt-4 space-y-4 text-xs">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'مبلغ دریافتی (تومان) *' : 'Amount (TOMAN) *'}
                 </label>
                 <input
@@ -186,17 +192,17 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
                   min="1"
                   value={payAmount}
                   onChange={(e) => setPayAmount(e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-xs dark:border-slate-700 dark:bg-slate-800"
+                  className="shopino-input mt-1 w-full px-3 font-mono"
                 />
               </div>
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'روش پرداخت' : 'Payment Method'}
                 </label>
                 <select
                   value={payMethod}
                   onChange={(e) => setPayMethod(e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs dark:border-slate-700 dark:bg-slate-800"
+                  className="shopino-input mt-1 w-full px-3"
                 >
                   {Object.entries(t.paymentMethod).map(([k, v]) => (
                     <option key={k} value={k}>
@@ -206,41 +212,41 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
                 </select>
               </div>
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'شماره پیگیری (اختیاری)' : 'Ref # (Optional)'}
                 </label>
                 <input
                   type="text"
                   value={payRef}
                   onChange={(e) => setPayRef(e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-xs dark:border-slate-700 dark:bg-slate-800"
+                  className="shopino-input mt-1 w-full px-3 font-mono"
                 />
               </div>
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {t.common.notes}
                 </label>
                 <input
                   type="text"
                   value={payNotes}
                   onChange={(e) => setPayNotes(e.target.value)}
-                  className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs dark:border-slate-700 dark:bg-slate-800"
+                  className="shopino-input mt-1 w-full px-3"
                 />
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-2.5 dark:bg-slate-800/50">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 dark:border-slate-700/60 dark:bg-[#0B1220]/75">
               <div className="flex flex-wrap items-center gap-4 text-xs">
-                <span>
+                <span className="text-slate-600 dark:text-[#94A3B8]">
                   {lang === 'fa' ? 'بدهی فعلی:' : 'Current Debt:'}{' '}
-                  <strong className="font-mono text-amber-600">
+                  <strong className="font-mono text-amber-600 dark:text-amber-400">
                     {formatCurrency(balanceBefore, lang)}
                   </strong>
                 </span>
-                <span>→</span>
-                <span>
+                <span className="text-slate-400 dark:text-[#94A3B8]">→</span>
+                <span className="text-slate-600 dark:text-[#94A3B8]">
                   {lang === 'fa' ? 'مانده پس از این پرداخت:' : 'Debt After Payment:'}{' '}
-                  <strong className="font-mono text-emerald-600">
+                  <strong className="font-mono text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(balanceAfter, lang)}
                   </strong>
                 </span>
@@ -255,29 +261,31 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
         {/* Sales History & Payment History */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Customer Sales History */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="border-b border-slate-200 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-white">
+          <div className="shopino-glass-card rounded-xl p-5">
+            <h3 className="border-b border-slate-200/80 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-[#F1F5F9]">
               {lang === 'fa' ? 'سوابق خرید و سفارش‌ها' : 'Sales & Order History'}
             </h3>
             {orders.length === 0 ? (
-              <p className="py-6 text-center text-xs text-slate-500">{t.common.noRecords}</p>
+              <p className="py-6 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+                {t.common.noRecords}
+              </p>
             ) : (
-              <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800">
+              <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800/80">
                 {orders.map((o: any) => (
                   <div key={o.id} className="flex items-center justify-between py-2.5">
                     <div>
                       <button
                         onClick={() => navigate(`/orders/${o.id}`)}
-                        className="font-mono font-bold text-blue-600 hover:underline dark:text-blue-400"
+                        className="font-mono font-bold text-[#0d9488] hover:underline dark:text-[#20D6C2]"
                       >
                         {o.order_number}
                       </button>
-                      <div className="mt-0.5 font-mono text-[11px] text-slate-400">
+                      <div className="mt-0.5 font-mono text-[11px] text-slate-400 dark:text-[#94A3B8]">
                         {formatDate(o.order_date, lang, settings.usePersianCalendar)}
                       </div>
                     </div>
                     <div className="text-end">
-                      <div className="font-mono font-bold text-slate-900 tabular-nums dark:text-white">
+                      <div className="font-mono font-bold text-slate-900 tabular-nums dark:text-[#F1F5F9]">
                         {formatCurrency(o.final_total, lang)}
                       </div>
                       <div className="mt-1 flex items-center justify-end gap-1.5">
@@ -309,21 +317,23 @@ export const CustomerDetailPage: React.FC<{ customerId: string }> = ({ customerI
           </div>
 
           {/* Customer Payment History */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="border-b border-slate-200 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-white">
+          <div className="shopino-glass-card rounded-xl p-5">
+            <h3 className="border-b border-slate-200/80 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-[#F1F5F9]">
               {lang === 'fa' ? 'سوابق پرداخت‌های مشتری' : 'Payment History'}
             </h3>
             {payments.length === 0 ? (
-              <p className="py-6 text-center text-xs text-slate-500">{t.common.noRecords}</p>
+              <p className="py-6 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+                {t.common.noRecords}
+              </p>
             ) : (
-              <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800">
+              <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800/80">
                 {payments.map((p: any) => (
                   <div key={p.id} className="flex items-center justify-between py-2.5">
                     <div>
-                      <div className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                      <div className="font-mono font-semibold text-slate-800 dark:text-[#F1F5F9]">
                         {p.payment_number}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-slate-400">
+                      <div className="mt-0.5 text-[11px] text-slate-400 dark:text-[#94A3B8]">
                         <span className="font-mono">
                           {formatDate(p.payment_date, lang, settings.usePersianCalendar)}
                         </span>

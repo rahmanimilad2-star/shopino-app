@@ -69,10 +69,10 @@ export const ReportsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="no-print flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center">
+      <div className="no-print shopino-glass-card flex flex-col justify-between gap-4 rounded-xl p-5 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t.nav.reports}</h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">{t.nav.reports}</h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
             {lang === 'fa'
               ? 'گزارش شفاف فروش، مبالغ دریافتی واقعی، بدهی مشتریان، مقایسه فروش تکی و عمده و سود تخمینی کالاها به تومان'
               : 'Clear sales summary, actual cash received, customer debts, retail vs. wholesale breakdown, and product profit estimate.'}
@@ -90,26 +90,26 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Date Filter Bar */}
-      <div className="no-print flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="no-print shopino-glass-card flex flex-wrap items-center justify-between gap-3 rounded-xl p-4 text-xs">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-semibold text-slate-600 dark:text-slate-300">
+          <span className="font-semibold text-slate-600 dark:text-[#94A3B8]">
             {t.common.dateFrom}:
           </span>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="h-10 rounded-lg border border-slate-300 bg-white px-3 font-mono dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3 font-mono"
           />
-          <span className="font-semibold text-slate-600 dark:text-slate-300">{t.common.dateTo}:</span>
+          <span className="font-semibold text-slate-600 dark:text-[#94A3B8]">{t.common.dateTo}:</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="h-10 rounded-lg border border-slate-300 bg-white px-3 font-mono dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3 font-mono"
           />
         </div>
-        <span className="text-[11px] text-slate-400">
+        <span className="text-[11px] text-slate-400 dark:text-[#94A3B8]">
           {lang === 'fa'
             ? '* فاکتورهای لغوشده از جمع فروش کسر شده‌اند. سود تخمینی فقط برای کالاهای دارای قیمت خرید محاسبه می‌شود.'
             : '* Cancelled sales are excluded. Estimated profit is calculated only where purchase cost is recorded.'}
@@ -158,25 +158,27 @@ export const ReportsPage: React.FC = () => {
 
         {/* Retail vs Wholesale Breakdown */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <div className="text-xs font-semibold text-slate-500">{t.customerType.retail}</div>
-            <div className="mt-2 font-mono text-xl font-bold text-slate-900 tabular-nums dark:text-white">
+          <div className="shopino-glass-card rounded-xl p-5">
+            <div className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">
+              {t.customerType.retail}
+            </div>
+            <div className="mt-2 font-mono text-xl font-bold text-slate-900 tabular-nums dark:text-[#F1F5F9]">
               {formatCurrency(s.retailSales, lang)}
             </div>
-            <div className="mt-1 text-xs text-slate-400">
+            <div className="mt-1 text-xs text-slate-400 dark:text-[#94A3B8]">
               {formatNumber(s.retailOrdersCount, lang)}{' '}
               {lang === 'fa' ? 'فاکتور خرده‌فروشی' : 'Retail orders'}
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <div className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+          <div className="shopino-glass-card rounded-xl p-5">
+            <div className="text-xs font-semibold text-[#0d9488] dark:text-[#20D6C2]">
               {t.customerType.wholesale}
             </div>
-            <div className="mt-2 font-mono text-xl font-bold text-slate-900 tabular-nums dark:text-white">
+            <div className="mt-2 font-mono text-xl font-bold text-slate-900 tabular-nums dark:text-[#F1F5F9]">
               {formatCurrency(s.wholesaleSales, lang)}
             </div>
-            <div className="mt-1 text-xs text-slate-400">
+            <div className="mt-1 text-xs text-slate-400 dark:text-[#94A3B8]">
               {formatNumber(s.wholesaleOrdersCount, lang)}{' '}
               {lang === 'fa' ? 'فاکتور عمده‌فروشی' : 'Wholesale orders'}
             </div>
@@ -184,9 +186,9 @@ export const ReportsPage: React.FC = () => {
         </div>
 
         {/* Best-Selling Products & Profit Estimate Table */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="shopino-table-card overflow-hidden rounded-xl">
           <div className="border-b border-slate-200 p-4 dark:border-slate-800">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
               {lang === 'fa'
                 ? 'پرفروش‌ترین کالاها و برآورد سود هر کالا'
                 : 'Best-Selling Products & Profit Estimate'}
@@ -194,11 +196,13 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-xs text-slate-500">{t.common.loading}</div>
+            <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+              {t.common.loading}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-start text-xs">
-                <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
+                <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]">
                   <tr>
                     <th className="px-4 py-3 text-start">{lang === 'fa' ? 'کد کالا' : 'Code'}</th>
                     <th className="px-4 py-3 text-start">{lang === 'fa' ? 'نام کالا' : 'Product'}</th>
@@ -208,21 +212,26 @@ export const ReportsPage: React.FC = () => {
                     <th className="px-4 py-3 text-end">{lang === 'fa' ? 'سود تخمینی کالا' : 'Estimated Profit'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/80">
                   {(data?.bestProducts || []).map((p: any) => (
-                    <tr key={p.id}>
-                      <td className="px-4 py-3 font-mono text-slate-500">{p.sku}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                    <tr
+                      key={p.id}
+                      className="transition-colors hover:bg-slate-50 dark:hover:bg-[#16233B]/60"
+                    >
+                      <td className="px-4 py-3 font-mono text-slate-500 dark:text-[#94A3B8]">
+                        {p.sku}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-[#F1F5F9]">
                         {p.name}
                       </td>
-                      <td className="px-4 py-3 text-end font-mono tabular-nums">
+                      <td className="px-4 py-3 text-end font-mono tabular-nums dark:text-[#F1F5F9]">
                         {formatNumber(p.units_sold, lang)}{' '}
                         {t.units[p.unit as keyof typeof t.units] || p.unit}
                       </td>
-                      <td className="px-4 py-3 text-end font-mono font-bold text-slate-900 tabular-nums dark:text-white">
+                      <td className="px-4 py-3 text-end font-mono font-bold text-slate-900 tabular-nums dark:text-[#F1F5F9]">
                         {formatCurrency(p.revenue, lang)}
                       </td>
-                      <td className="px-4 py-3 text-end font-mono text-slate-500 tabular-nums">
+                      <td className="px-4 py-3 text-end font-mono text-slate-500 tabular-nums dark:text-[#94A3B8]">
                         {p.has_cost ? formatCurrency(p.cost_price, lang) : '—'}
                       </td>
                       <td className="px-4 py-3 text-end font-mono font-bold text-emerald-600 tabular-nums dark:text-emerald-400">
@@ -243,20 +252,20 @@ export const ReportsPage: React.FC = () => {
         {/* Sales by Day and Month */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Sales by Day */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="border-b border-slate-200 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-white">
+          <div className="shopino-glass-card rounded-xl p-5">
+            <h3 className="border-b border-slate-200/80 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-[#F1F5F9]">
               {lang === 'fa' ? 'فروش روزانه' : 'Sales by Day'}
             </h3>
-            <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800">
+            <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800/80">
               {(data?.salesByDay || []).map((row: any) => (
                 <div key={row.period} className="flex items-center justify-between py-2.5">
-                  <span className="font-mono text-slate-600 dark:text-slate-300">
+                  <span className="font-mono text-slate-600 dark:text-[#94A3B8]">
                     {formatDate(row.period, lang, settings.usePersianCalendar)}
                   </span>
-                  <span className="text-slate-400">
+                  <span className="text-slate-400 dark:text-[#94A3B8]">
                     {formatNumber(row.count, lang)} {lang === 'fa' ? 'فاکتور' : 'orders'}
                   </span>
-                  <span className="font-mono font-bold text-slate-900 tabular-nums dark:text-white">
+                  <span className="font-mono font-bold text-slate-900 tabular-nums dark:text-[#20D6C2]">
                     {formatCurrency(row.total, lang)}
                   </span>
                 </div>
@@ -265,20 +274,20 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           {/* Sales by Month */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="border-b border-slate-200 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-white">
+          <div className="shopino-glass-card rounded-xl p-5">
+            <h3 className="border-b border-slate-200/80 pb-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-[#F1F5F9]">
               {lang === 'fa' ? 'فروش ماهانه' : 'Sales by Month'}
             </h3>
-            <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800">
+            <div className="mt-3 divide-y divide-slate-100 text-xs dark:divide-slate-800/80">
               {(data?.salesByMonth || []).map((row: any) => (
                 <div key={row.period} className="flex items-center justify-between py-2.5">
-                  <span className="font-mono text-slate-600 dark:text-slate-300">
+                  <span className="font-mono text-slate-600 dark:text-[#94A3B8]">
                     {formatDate(`${row.period}-01`, lang, settings.usePersianCalendar)}
                   </span>
-                  <span className="text-slate-400">
+                  <span className="text-slate-400 dark:text-[#94A3B8]">
                     {formatNumber(row.count, lang)} {lang === 'fa' ? 'فاکتور' : 'orders'}
                   </span>
-                  <span className="font-mono font-bold text-slate-900 tabular-nums dark:text-white">
+                  <span className="font-mono font-bold text-slate-900 tabular-nums dark:text-[#7C83FF]">
                     {formatCurrency(row.total, lang)}
                   </span>
                 </div>

@@ -11,12 +11,16 @@ export const SettingsPage: React.FC = () => {
     theme,
     toggleTheme,
     user,
+    allowDemoLogin,
     settings,
     refreshSession,
     apiFetch,
     showToast,
     requestConfirm,
   } = useApp();
+
+  const canEditShopSettings = !user || ['owner', 'manager'].includes(user.role);
+  const isOwner = !user || user.role === 'owner';
 
   const [form, setForm] = useState(settings);
   const [prodCatsStr, setProdCatsStr] = useState((settings.productCategories || []).join('، '));
@@ -25,6 +29,7 @@ export const SettingsPage: React.FC = () => {
   // User Profile & Password State
   const [profileName, setProfileName] = useState(user?.name_fa || user?.name || '');
   const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
 
@@ -78,10 +83,12 @@ export const SettingsPage: React.FC = () => {
           name: profileName,
           name_fa: profileName,
           email: profileEmail,
+          currentPassword: currentPassword || undefined,
           newPassword: newPassword || undefined,
         }),
       });
       await refreshSession();
+      setCurrentPassword('');
       setNewPassword('');
       showToast(
         lang === 'fa' ? 'مشخصات کاربری و رمز عبور به‌روزرسانی شد.' : 'Profile updated.',
@@ -105,7 +112,10 @@ export const SettingsPage: React.FC = () => {
       variant: 'primary',
       onConfirm: async () => {
         try {
-          await apiFetch('/api/settings/reset-demo', { method: 'POST' });
+          await apiFetch('/api/settings/reset-demo', {
+            method: 'POST',
+            body: JSON.stringify({ confirm: true }),
+          });
           showToast(
             lang === 'fa' ? 'داده‌های نمونه بازنشانی شدند.' : 'Sample data reset.',
             'success'
@@ -128,7 +138,10 @@ export const SettingsPage: React.FC = () => {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await apiFetch('/api/settings/purge-demo', { method: 'POST' });
+          await apiFetch('/api/settings/purge-demo', {
+            method: 'POST',
+            body: JSON.stringify({ confirm: true }),
+          });
           showToast(
             lang === 'fa'
               ? 'داده‌های نمونه حذف شدند.'
@@ -142,15 +155,14 @@ export const SettingsPage: React.FC = () => {
     });
   };
 
-  const inputClass =
-    'mt-1 h-10 min-h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+  const inputClass = 'shopino-input mt-1 w-full px-3';
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t.nav.settings}</h1>
-        <p className="mt-1 text-xs text-slate-500">
+      <div className="shopino-glass-card rounded-xl p-5">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">{t.nav.settings}</h1>
+        <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
           {lang === 'fa'
             ? 'تنظیمات نام و لوگوی فروشگاه، شماره تماس، واحد پول (تومان)، رهگیری موجودی انبار و حساب کاربری'
             : 'Configure shop name, logo, phone, Toman currency, inventory tracking, and user profile.'}
@@ -159,14 +171,14 @@ export const SettingsPage: React.FC = () => {
 
       {/* 1. Shop & Receipt Settings Form */}
       <form onSubmit={handleSaveSettings} className="space-y-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+        <div className="shopino-glass-card rounded-xl p-6">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
             {lang === 'fa' ? 'مشخصات فروشگاه و رسید فروش' : 'Shop Identity & Receipt Preferences'}
           </h2>
 
           <div className="mt-4 grid grid-cols-1 gap-4 text-xs sm:grid-cols-3">
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'نام فروشگاه (فارسی)' : 'Shop Name (Persian)'}
               </label>
               <input
@@ -177,7 +189,7 @@ export const SettingsPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'نام فروشگاه (انگلیسی)' : 'Shop Name (English)'}
               </label>
               <input
@@ -188,7 +200,7 @@ export const SettingsPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'نشان لوگو (۲ تا ۴ حرف)' : 'Logo Monogram'}
               </label>
               <input
@@ -200,7 +212,7 @@ export const SettingsPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'شماره تماس فروشگاه' : 'Shop Phone Number'}
               </label>
               <input
@@ -211,7 +223,7 @@ export const SettingsPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'نشانی فروشگاه (فارسی)' : 'Address (Persian)'}
               </label>
               <input
@@ -222,21 +234,21 @@ export const SettingsPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'واحد پول رسمی سیستم' : 'System Currency'}
               </label>
               <input
                 type="text"
                 disabled
                 value={lang === 'fa' ? 'تومان (TOMAN)' : 'TOMAN (تومان)'}
-                className={`${inputClass} bg-slate-100 text-slate-500 dark:bg-slate-800/50`}
+                className={`${inputClass} bg-slate-100 text-slate-500 dark:bg-[#0B1220]/50 dark:text-[#94A3B8]`}
               />
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 border-t border-slate-200 pt-4 text-xs sm:grid-cols-3 dark:border-slate-800">
+          <div className="mt-4 grid grid-cols-1 gap-4 border-t border-slate-200/80 pt-4 text-xs sm:grid-cols-3 dark:border-slate-800">
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'نوع فروش پیش‌فرض' : 'Default Pricing Mode'}
               </label>
               <select
@@ -251,7 +263,7 @@ export const SettingsPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'پیشوند شماره رسید / فاکتور' : 'Receipt Number Prefix'}
               </label>
               <input
@@ -262,7 +274,7 @@ export const SettingsPage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'حداقل موجودی پیش‌فرض (هشدار کمبود)' : 'Default Low-Stock Warning'}
               </label>
               <input
@@ -278,7 +290,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div className="mt-4">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-[#F1F5F9]">
               {lang === 'fa'
                 ? 'دسته‌بندی‌های کالاها (با کاما یا ویرگول جدا کنید)'
                 : 'Product Categories (comma-separated)'}
@@ -292,13 +304,13 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Toggles: Inventory Tracking, Persian Calendar, Language, Theme */}
-          <div className="mt-5 flex flex-wrap items-center gap-6 border-t border-slate-200 pt-4 text-xs dark:border-slate-800">
-            <label className="flex cursor-pointer items-center gap-2 font-medium">
+          <div className="mt-5 flex flex-wrap items-center gap-6 border-t border-slate-200/80 pt-4 text-xs dark:border-slate-800">
+            <label className="flex cursor-pointer items-center gap-2 font-medium text-slate-700 dark:text-[#F1F5F9]">
               <input
                 type="checkbox"
                 checked={form.enableInventoryTracking !== false}
                 onChange={(e) => setForm({ ...form, enableInventoryTracking: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                className="h-4 w-4 rounded border-slate-300 accent-[#20D6C2]"
               />
               <span>
                 {lang === 'fa'
@@ -307,12 +319,12 @@ export const SettingsPage: React.FC = () => {
               </span>
             </label>
 
-            <label className="flex cursor-pointer items-center gap-2 font-medium">
+            <label className="flex cursor-pointer items-center gap-2 font-medium text-slate-700 dark:text-[#F1F5F9]">
               <input
                 type="checkbox"
                 checked={form.usePersianCalendar}
                 onChange={(e) => setForm({ ...form, usePersianCalendar: e.target.checked })}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                className="h-4 w-4 rounded border-slate-300 accent-[#20D6C2]"
               />
               <span>
                 {lang === 'fa'
@@ -340,27 +352,29 @@ export const SettingsPage: React.FC = () => {
             </Button>
           </div>
 
-          <div className="mt-5 flex justify-end">
-            <Button type="submit" variant="primary" icon={Save} disabled={saving}>
-              {t.common.save}
-            </Button>
-          </div>
+          {canEditShopSettings && (
+            <div className="mt-5 flex justify-end">
+              <Button type="submit" variant="primary" icon={Save} disabled={saving}>
+                {t.common.save}
+              </Button>
+            </div>
+          )}
         </div>
       </form>
 
       {/* 2. User Profile & Password */}
       <form
         onSubmit={handleSaveProfile}
-        className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
+        className="shopino-glass-card rounded-xl p-6"
       >
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-          <UserCheck className="h-4 w-4 text-blue-600" />
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
+          <UserCheck className="h-4 w-4 text-[#0d9488] dark:text-[#20D6C2]" />
           <span>{lang === 'fa' ? 'حساب کاربری و تغییر رمز عبور' : 'User Profile & Password'}</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-4 text-xs sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300">
+            <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
               {lang === 'fa' ? 'نام و نام خانوادگی' : 'Full Name'}
             </label>
             <input
@@ -372,7 +386,7 @@ export const SettingsPage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300">
+            <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
               {lang === 'fa' ? 'ایمیل ورود' : 'Login Email'}
             </label>
             <input
@@ -384,11 +398,25 @@ export const SettingsPage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300">
-              {lang === 'fa' ? 'رمز عبور جدید (در صورت تمایل به تغییر)' : 'New Password (Optional)'}
+            <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
+              {lang === 'fa' ? 'رمز عبور فعلی (برای تغییر رمز/ایمیل)' : 'Current Password'}
             </label>
             <input
               type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="••••••••"
+              className={`${inputClass} font-mono`}
+            />
+          </div>
+          <div>
+            <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
+              {lang === 'fa' ? 'رمز عبور جدید (حداقل ۸ کاراکتر)' : 'New Password (min 8 chars)'}
+            </label>
+            <input
+              type="password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="••••••••"
@@ -404,48 +432,52 @@ export const SettingsPage: React.FC = () => {
         </div>
       </form>
 
-      {/* 3. Sample Data Controls */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-          <Database className="h-4 w-4 text-blue-600" />
-          <span>
+      {/* 3. Sample Data Controls (Owner only) */}
+      {isOwner && (
+        <div className="shopino-glass-card rounded-xl p-6">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
+            <Database className="h-4 w-4 text-[#0d9488] dark:text-[#20D6C2]" />
+            <span>
+              {lang === 'fa'
+                ? 'مدیریت داده‌های نمونه (شروع کار واقعی فروشگاه)'
+                : 'Sample Data Controls'}
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-slate-500 dark:text-[#94A3B8]">
             {lang === 'fa'
-              ? 'مدیریت داده‌های نمونه (شروع کار واقعی فروشگاه)'
-              : 'Sample Data Controls'}
-          </span>
+              ? 'اطلاعات نمونه آزمایشی با اطلاعات واقعی شما ترکیب نمی‌شوند. هر زمان مایل بودید می‌توانید داده‌های نمونه را پاک کنید تا سیستم فقط با فاکتورهای واقعی فروشگاه شما کار کند.'
+              : 'Sample data is clearly separated from your real records. You can reset or purge sample data anytime.'}
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {allowDemoLogin && (
+              <Button variant="outline" icon={RotateCcw} onClick={handleResetDemo}>
+                {t.common.resetDemoData}
+              </Button>
+            )}
+            <Button variant="danger" icon={Trash2} onClick={handlePurgeDemo}>
+              {lang === 'fa'
+                ? 'حذف داده‌های نمونه (شروع کار واقعی)'
+                : 'Purge All Sample Data'}
+            </Button>
+          </div>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
-          {lang === 'fa'
-            ? 'اطلاعات نمونه آزمایشی با اطلاعات واقعی شما ترکیب نمی‌شوند. هر زمان مایل بودید می‌توانید داده‌های نمونه را پاک کنید تا سیستم فقط با فاکتورهای واقعی فروشگاه شما کار کند.'
-            : 'Sample data is clearly separated from your real records. You can reset or purge sample data anytime.'}
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button variant="outline" icon={RotateCcw} onClick={handleResetDemo}>
-            {t.common.resetDemoData}
-          </Button>
-          <Button variant="danger" icon={Trash2} onClick={handlePurgeDemo}>
-            {lang === 'fa'
-              ? 'حذف داده‌های نمونه (شروع کار واقعی)'
-              : 'Purge All Sample Data'}
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* 4. About the App */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
-          <Info className="h-4 w-4 text-blue-600" />
+      <div className="shopino-glass-card rounded-xl p-6">
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
+          <Info className="h-4 w-4 text-[#0d9488] dark:text-[#20D6C2]" />
           <span>{lang === 'fa' ? 'درباره برنامه (About the App)' : 'About the App'}</span>
         </div>
 
-        <div className="mt-3 flex flex-col justify-between gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500 sm:flex-row sm:items-center dark:border-slate-800 dark:text-slate-400">
+        <div className="mt-3 flex flex-col justify-between gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500 sm:flex-row sm:items-center dark:border-slate-800 dark:text-[#94A3B8]">
           <div>
-            <div className="font-semibold text-slate-800 dark:text-slate-200">
+            <div className="font-semibold text-slate-800 dark:text-[#F1F5F9]">
               {lang === 'fa'
                 ? `${settings.businessNameFa || t.brandName} — ${t.brandSubtitle}`
                 : `${settings.businessName || t.brandName} — ${t.brandSubtitle}`}
             </div>
-            <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+            <div className="mt-1 text-[11px] text-slate-400 dark:text-[#94A3B8]">
               {lang === 'fa'
                 ? 'نسخه ۱.۰ — طراحی‌شده ویژه مدیریت ساده فروش، مشتریان و موجودی کالا به تومان'
                 : 'Version 1.0 — Built for retail & wholesale sales, customer balances, and inventory in Toman'}
@@ -453,7 +485,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col items-start gap-1 border-t border-slate-100 pt-3 sm:items-end sm:border-t-0 sm:pt-0 dark:border-slate-800">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+            <span className="text-xs font-medium text-slate-600 dark:text-[#F1F5F9]">
               Developed by M. R
             </span>
             <a
@@ -461,7 +493,7 @@ export const SettingsPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               dir="ltr"
-              className="inline-flex items-center gap-1.5 font-mono text-xs text-slate-500 transition-colors hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+              className="inline-flex items-center gap-1.5 font-mono text-xs text-slate-500 transition-colors hover:text-[#0d9488] dark:text-[#94A3B8] dark:hover:text-[#20D6C2]"
             >
               <Send className="h-3.5 w-3.5 shrink-0" strokeWidth={1.85} />
               <span>@rahmani208</span>

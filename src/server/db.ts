@@ -3,19 +3,58 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
-const DB_DIR = path.resolve(process.cwd(), 'data');
-const DB_FILE = path.join(DB_DIR, 'shopino.sqlite');
+const DEFAULT_DB_DIR = path.resolve(process.cwd(), 'data');
+
+export function getDbFilePath(): string {
+  if (process.env.DATABASE_PATH && process.env.DATABASE_PATH.trim()) {
+    return path.resolve(process.cwd(), process.env.DATABASE_PATH.trim());
+  }
+  return path.join(DEFAULT_DB_DIR, 'shopino.sqlite');
+}
 
 let dbInstance: Database | null = null;
 let inTransaction = false;
 
 export function saveDatabase() {
   if (!dbInstance || inTransaction) return;
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
+  const dbFile = getDbFilePath();
+  const dbDir = path.dirname(dbFile);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
   }
   const data = dbInstance.export();
-  fs.writeFileSync(DB_FILE, Buffer.from(data));
+  const tmpFile = `${dbFile}.tmp.${process.pid}.${Date.now()}`;
+  fs.writeFileSync(tmpFile, Buffer.from(data), { mode: 0o600 });
+  fs.renameSync(tmpFile, dbFile);
+}
+
+export function createDatabaseBackup(label = 'auto'): string | null {
+  const dbFile = getDbFilePath();
+  if (!fs.existsSync(dbFile)) return null;
+  const backupDir = path.join(path.dirname(dbFile), 'backups');
+  if (!fs.existsSync(backupDir)) {
+    fs.mkdirSync(backupDir, { recursive: true });
+  }
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const safeLabel = label.replace(/[^a-zA-Z0-9_-]/g, '');
+  const backupPath = path.join(backupDir, `shopino-${safeLabel}-${stamp}.sqlite.bak`);
+  fs.copyFileSync(dbFile, backupPath);
+
+  // Retain at most 10 auto backups to prevent unbounded disk growth
+  try {
+    const files = fs
+      .readdirSync(backupDir)
+      .filter((f) => f.startsWith('shopino-auto-') && f.endsWith('.sqlite.bak'))
+      .map((f) => ({ name: f, full: path.join(backupDir, f), mtime: fs.statSync(path.join(backupDir, f)).mtimeMs }))
+      .sort((a, b) => b.mtime - a.mtime);
+    for (const old of files.slice(10)) {
+      fs.unlinkSync(old.full);
+    }
+  } catch {
+    // ignore backup rotation errors
+  }
+
+  return backupPath;
 }
 
 export function runTransaction<T>(fn: () => T): T {
@@ -46,12 +85,65 @@ export function runTransaction<T>(fn: () => T): T {
   }
 }
 
-export function hashPassword(password: string): string {
+export function legacyHashPassword(password: string): string {
   return crypto.createHash('sha256').update(password + '_shopino_salt_2026').digest('hex');
 }
 
+export function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const derived = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `scrypt$${salt}$${derived}`;
+}
+
+export function verifyPassword(
+  password: string,
+  storedHash: string
+): { valid: boolean; needsRehash: boolean } {
+  if (!storedHash || typeof password !== 'string') {
+    return { valid: false, needsRehash: false };
+  }
+
+  if (storedHash.startsWith('scrypt$')) {
+    const parts = storedHash.split('$');
+    if (parts.length !== 3) {
+      return { valid: false, needsRehash: false };
+    }
+    const [, salt, expectedHex] = parts;
+    try {
+      const actualBuf = crypto.scryptSync(password, salt, 64);
+      const expectedBuf = Buffer.from(expectedHex, 'hex');
+      if (actualBuf.length !== expectedBuf.length) {
+        return { valid: false, needsRehash: false };
+      }
+      const valid = crypto.timingSafeEqual(actualBuf, expectedBuf);
+      return { valid, needsRehash: false };
+    } catch {
+      return { valid: false, needsRehash: false };
+    }
+  }
+
+  // Legacy SHA-256 hash migration verification
+  const legacyHex = legacyHashPassword(password);
+  try {
+    const a = Buffer.from(legacyHex, 'utf8');
+    const b = Buffer.from(storedHash, 'utf8');
+    if (a.length !== b.length) {
+      return { valid: false, needsRehash: false };
+    }
+    const valid = crypto.timingSafeEqual(a, b);
+    return { valid, needsRehash: valid };
+  } catch {
+    return { valid: false, needsRehash: false };
+  }
+}
+
+export function hashSessionToken(rawToken: string): string {
+  const secret = process.env.SESSION_SECRET || 'shopino-default-session-secret-2026';
+  return 'sha256$' + crypto.createHmac('sha256', secret).update(rawToken).digest('hex');
+}
+
 export function generateId(prefix: string): string {
-  return `${prefix}_${crypto.randomBytes(6).toString('hex')}`;
+  return `${prefix}_${crypto.randomBytes(8).toString('hex')}`;
 }
 
 /**
@@ -59,14 +151,17 @@ export function generateId(prefix: string): string {
  * Never multiply or divide by 10 or 100.
  */
 export function toCents(amount: number | string): number {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  if (isNaN(num)) return 0;
+  if (typeof amount !== 'number' && typeof amount !== 'string') return 0;
+  const num = typeof amount === 'string' ? Number(amount.trim()) : amount;
+  if (!Number.isFinite(num)) return 0;
   return Math.round(num);
 }
 
 export function fromCents(tomanInt: number | null | undefined): number {
-  if (!tomanInt) return 0;
-  return Math.round(Number(tomanInt));
+  if (tomanInt === null || tomanInt === undefined) return 0;
+  const num = Number(tomanInt);
+  if (!Number.isFinite(num)) return 0;
+  return Math.round(num);
 }
 
 export function queryAll<T = any>(sql: string, params: any[] = []): T[] {
@@ -101,12 +196,25 @@ export function getDb(): Database {
   return dbInstance;
 }
 
+export function closeAndResetDb(): void {
+  if (dbInstance) {
+    try {
+      dbInstance.close();
+    } catch {
+      // ignore
+    }
+    dbInstance = null;
+    inTransaction = false;
+  }
+}
+
 export async function initDb(): Promise<Database> {
   if (dbInstance) return dbInstance;
 
   const SQL = await initSqlJs();
-  if (fs.existsSync(DB_FILE)) {
-    const fileBuffer = fs.readFileSync(DB_FILE);
+  const dbFile = getDbFilePath();
+  if (fs.existsSync(dbFile)) {
+    const fileBuffer = fs.readFileSync(dbFile);
     dbInstance = new SQL.Database(fileBuffer);
   } else {
     dbInstance = new SQL.Database();
@@ -114,6 +222,7 @@ export async function initDb(): Promise<Database> {
 
   createSchema(dbInstance);
   ensureSeedData();
+  migrateExistingDatabase();
   saveDatabase();
   return dbInstance;
 }
@@ -284,7 +393,38 @@ function createSchema(db: Database) {
       summary TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
+
+    CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
+    CREATE INDEX IF NOT EXISTS idx_orders_order_date ON orders(order_date);
+    CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+    CREATE INDEX IF NOT EXISTS idx_payments_customer_id ON payments(customer_id);
+    CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
+    CREATE INDEX IF NOT EXISTS idx_inventory_movements_product_id ON inventory_movements(product_id);
   `);
+}
+
+function migrateExistingDatabase() {
+  // Non-destructive migration:
+  // 1. Prune expired sessions
+  executeSql('DELETE FROM sessions WHERE expires_at < ?', [new Date().toISOString()]);
+
+  // 2. Upgrade any default untouched SHA-256 staff password hashes to salted scrypt
+  const defaultLegacyHash = legacyHashPassword('SellerHub@2026');
+  const legacyUsers = queryAll<{ id: string; password_hash: string }>(
+    'SELECT id, password_hash FROM users WHERE password_hash = ?',
+    [defaultLegacyHash]
+  );
+  if (legacyUsers.length > 0) {
+    runTransaction(() => {
+      for (const u of legacyUsers) {
+        executeSql('UPDATE users SET password_hash = ? WHERE id = ?', [
+          hashPassword('SellerHub@2026'),
+          u.id,
+        ]);
+      }
+    });
+  }
 }
 
 export function ensureSeedData() {
@@ -308,7 +448,11 @@ export function ensureSeedData() {
 
 function seedUsersAndSettings() {
   const now = new Date().toISOString();
-  const defaultPass = hashPassword('SellerHub@2026');
+  const initialOwnerPass =
+    process.env.INITIAL_OWNER_PASSWORD && process.env.INITIAL_OWNER_PASSWORD.trim().length >= 8
+      ? process.env.INITIAL_OWNER_PASSWORD.trim()
+      : 'SellerHub@2026';
+  const defaultPass = hashPassword(initialOwnerPass);
 
   const staff = [
     {
@@ -861,6 +1005,7 @@ export function seedDemoData() {
 }
 
 export function purgeDemoData() {
+  createDatabaseBackup('auto-pre-purge');
   runTransaction(() => {
     executeSql('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE is_demo = 1)');
     executeSql('DELETE FROM orders WHERE is_demo = 1');
@@ -872,3 +1017,4 @@ export function purgeDemoData() {
     executeSql('DELETE FROM notifications WHERE is_demo = 1');
   });
 }
+

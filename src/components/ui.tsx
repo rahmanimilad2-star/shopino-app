@@ -22,24 +22,24 @@ export const IconButton: React.FC<IconButtonProps> = ({
 }) => {
   const variantClasses =
     variant === 'danger'
-      ? 'border-slate-200 bg-white text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-red-950/40 dark:hover:text-red-400'
+      ? 'border-slate-200 bg-white text-slate-600 hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-slate-800/80 dark:bg-[#111C30]/80 dark:text-[#94A3B8] dark:hover:border-red-500/40 dark:hover:bg-red-950/40 dark:hover:text-red-400'
       : variant === 'ghost'
-      ? 'border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+      ? 'border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-[#94A3B8] dark:hover:bg-[#111C30] dark:hover:text-[#F1F5F9]'
       : active
-      ? 'border-blue-600 bg-blue-50 text-blue-600 dark:border-blue-500 dark:bg-blue-950/50 dark:text-blue-400'
-      : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+      ? 'border-[#20D6C2]/60 bg-[#20D6C2]/12 text-[#0d9488] shadow-[0_0_16px_-4px_rgba(32,214,194,0.35)] dark:border-[#20D6C2]/50 dark:bg-[#20D6C2]/15 dark:text-[#20D6C2]'
+      : 'border-slate-200/90 bg-white/90 text-slate-600 hover:border-[#20D6C2]/40 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700/50 dark:bg-[#111C30]/85 dark:text-[#94A3B8] dark:hover:border-[#20D6C2]/40 dark:hover:bg-[#16233B] dark:hover:text-[#F1F5F9]';
 
   return (
     <button
       type="button"
-      className={`relative m-0 inline-flex h-10 w-10 min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-lg border p-0 leading-none transition-colors focus:ring-2 focus:ring-blue-500/30 focus:outline-none disabled:opacity-50 ${variantClasses} ${className}`}
+      className={`relative m-0 inline-flex h-10 w-10 min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-lg border p-0 leading-none transition-all duration-150 focus:ring-2 focus:ring-[#20D6C2]/30 focus:outline-none disabled:opacity-50 ${variantClasses} ${className}`}
       {...props}
     >
       <span className="flex h-5 w-5 items-center justify-center">
         <Icon className="h-5 w-5 shrink-0" strokeWidth={1.85} />
       </span>
       {typeof badgeCount === 'number' && badgeCount > 0 && (
-        <span className="pointer-events-none absolute -top-1 -end-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-600 px-1 font-mono text-[10px] font-bold leading-none text-white shadow-xs">
+        <span className="pointer-events-none absolute -top-1 -end-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#20D6C2] px-1 font-mono text-[10px] font-extrabold leading-none text-[#041417] shadow-[0_0_10px_rgba(32,214,194,0.6)]">
           {badgeCount > 99 ? '99+' : badgeCount}
         </span>
       )}
@@ -73,19 +73,19 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantClasses = {
     primary:
-      'border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500/30',
+      'border border-[#20D6C2]/80 bg-[#20D6C2] text-[#041417] font-bold shadow-[0_4px_18px_-4px_rgba(32,214,194,0.42)] hover:bg-[#31e2ce] hover:shadow-[0_6px_22px_-3px_rgba(32,214,194,0.58)] active:scale-[0.99] focus:ring-2 focus:ring-[#20D6C2]/40',
     secondary:
-      'border border-transparent bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 focus:ring-2 focus:ring-slate-500/30',
+      'border border-[#7C83FF]/35 bg-[#7C83FF]/15 text-[#4f46e5] hover:bg-[#7C83FF]/25 dark:border-[#7C83FF]/40 dark:bg-[#7C83FF]/18 dark:text-[#c7d2fe] dark:hover:bg-[#7C83FF]/28 focus:ring-2 focus:ring-[#7C83FF]/30',
     outline:
-      'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 focus:ring-2 focus:ring-slate-500/20',
+      'border border-slate-200/90 bg-white/90 text-slate-700 hover:border-[#20D6C2]/45 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700/60 dark:bg-[#111C30]/80 dark:text-[#F1F5F9] dark:hover:border-[#20D6C2]/45 dark:hover:bg-[#16233B] focus:ring-2 focus:ring-[#20D6C2]/25',
     danger:
-      'border border-transparent bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500/30',
+      'border border-red-500/40 bg-red-600 text-white shadow-[0_4px_14px_-4px_rgba(239,68,68,0.45)] hover:bg-red-500 focus:ring-2 focus:ring-red-500/35',
   }[variant];
 
   return (
     <button
       type={type}
-      className={`m-0 inline-flex shrink-0 items-center justify-center font-semibold leading-none whitespace-nowrap transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50 ${sizeClasses} ${variantClasses} ${className}`}
+      className={`m-0 inline-flex shrink-0 items-center justify-center font-semibold leading-none whitespace-nowrap transition-all duration-150 focus:outline-none disabled:pointer-events-none disabled:opacity-50 ${sizeClasses} ${variantClasses} ${className}`}
       {...props}
     >
       {Icon && (
@@ -119,22 +119,35 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   onClick,
 }) => {
   const toneStyles = {
-    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400',
-    emerald: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400',
-    amber: 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400',
-    rose: 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400',
-    slate: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    blue: 'border border-[#20D6C2]/30 bg-[#20D6C2]/12 text-[#0d9488] dark:border-[#20D6C2]/30 dark:bg-[#20D6C2]/15 dark:text-[#20D6C2] shadow-[0_0_16px_-4px_rgba(32,214,194,0.28)]',
+    emerald:
+      'border border-emerald-500/25 bg-emerald-500/12 text-emerald-600 dark:border-emerald-400/30 dark:bg-emerald-500/15 dark:text-emerald-400 shadow-[0_0_16px_-4px_rgba(16,185,129,0.24)]',
+    amber:
+      'border border-amber-500/25 bg-amber-500/12 text-amber-600 dark:border-amber-400/30 dark:bg-amber-500/15 dark:text-amber-400 shadow-[0_0_16px_-4px_rgba(245,158,11,0.24)]',
+    rose: 'border border-rose-500/25 bg-rose-500/12 text-rose-600 dark:border-rose-400/30 dark:bg-rose-500/15 dark:text-rose-400 shadow-[0_0_16px_-4px_rgba(244,63,94,0.24)]',
+    slate:
+      'border border-[#7C83FF]/25 bg-[#7C83FF]/12 text-[#4f46e5] dark:border-[#7C83FF]/30 dark:bg-[#7C83FF]/15 dark:text-[#7C83FF] shadow-[0_0_16px_-4px_rgba(124,131,255,0.25)]',
+  }[tone];
+
+  const topAccentBorder = {
+    blue: 'before:bg-gradient-to-r before:from-[#20D6C2]/70 before:to-transparent',
+    emerald: 'before:bg-gradient-to-r before:from-emerald-400/70 before:to-transparent',
+    amber: 'before:bg-gradient-to-r before:from-amber-400/70 before:to-transparent',
+    rose: 'before:bg-gradient-to-r before:from-rose-400/70 before:to-transparent',
+    slate: 'before:bg-gradient-to-r before:from-[#7C83FF]/70 before:to-transparent',
   }[tone];
 
   return (
     <div
       onClick={onClick}
-      className={`flex h-full min-h-[124px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 transition-colors dark:border-slate-800 dark:bg-slate-900 ${
-        onClick ? 'cursor-pointer hover:border-blue-400 dark:hover:border-blue-500' : ''
+      className={`shopino-glass-card relative flex h-full min-h-[126px] flex-col justify-between overflow-hidden rounded-xl p-5 before:absolute before:top-0 before:inset-x-0 before:h-[2px] ${topAccentBorder} ${
+        onClick
+          ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[#20D6C2]/45 dark:hover:border-[#20D6C2]/45'
+          : ''
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <span className="line-clamp-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="line-clamp-1 text-xs font-medium text-slate-500 dark:text-[#94A3B8]">
           {title}
         </span>
         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${toneStyles}`}>
@@ -143,13 +156,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       </div>
       <div className="mt-3 min-w-0">
         <div
-          className="truncate font-mono text-lg font-bold tracking-tight text-slate-900 tabular-nums sm:text-xl dark:text-white"
+          className="truncate font-mono text-lg font-bold tracking-tight text-slate-900 tabular-nums sm:text-xl dark:text-[#F1F5F9]"
           title={value}
         >
           {value}
         </div>
         {subtitle && (
-          <div className="mt-1 truncate text-[11px] text-slate-400 dark:text-slate-500">
+          <div className="mt-1 truncate text-[11px] text-slate-400 dark:text-[#94A3B8]/80">
             {subtitle}
           </div>
         )}
@@ -167,15 +180,15 @@ export const StatusBadge: React.FC<{
 }> = ({ label, tone = 'neutral' }) => {
   const styles = {
     success:
-      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
+      'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/12 dark:text-emerald-300',
     warning:
-      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
+      'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/12 dark:text-amber-300',
     danger:
-      'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300',
+      'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/12 dark:text-rose-300',
     info:
-      'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300',
+      'border-teal-200 bg-teal-50 text-teal-700 dark:border-[#20D6C2]/35 dark:bg-[#20D6C2]/12 dark:text-[#20D6C2]',
     neutral:
-      'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300',
+      'border-slate-200 bg-slate-100 text-slate-700 dark:border-[#7C83FF]/25 dark:bg-[#7C83FF]/10 dark:text-[#cbd5e1]',
   }[tone];
 
   return (

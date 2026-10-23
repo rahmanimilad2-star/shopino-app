@@ -162,16 +162,15 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
     }
   };
 
-  const inputClass =
-    'mt-1 h-10 min-h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+  const inputClass = 'shopino-input mt-1 w-full px-3';
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center">
+      <div className="shopino-glass-card flex flex-col justify-between gap-4 rounded-xl p-5 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t.nav.products}</h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">{t.nav.products}</h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
             {lang === 'fa'
               ? 'مدیریت کالاها، قیمت خرده‌فروشی و عمده‌فروشی (تومان) و کنترل موجودی انبار'
               : 'Manage products, retail & wholesale Toman prices, and stock levels.'}
@@ -192,9 +191,9 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div className="shopino-glass-card flex flex-wrap items-center justify-between gap-3 rounded-xl p-4">
         <div className="relative min-w-64 flex-1">
-          <Search className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400 dark:text-[#94A3B8]" />
           <input
             type="text"
             value={search}
@@ -202,7 +201,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
             placeholder={
               lang === 'fa' ? 'جستجوی نام کالا یا کد کالا...' : 'Search product name or code...'
             }
-            className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 ps-9 pe-3 text-xs focus:border-blue-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input w-full ps-9 pe-3"
           />
         </div>
 
@@ -210,7 +209,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3"
           >
             <option value="all">{lang === 'fa' ? 'همه دسته‌بندی‌ها' : 'All Categories'}</option>
             {settings.productCategories.map((c) => (
@@ -223,7 +222,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
           <select
             value={stockFilter}
             onChange={(e) => setStockFilter(e.target.value as any)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3"
           >
             <option value="all">{lang === 'fa' ? 'همه وضعیت‌های موجودی' : 'All Stock Levels'}</option>
             <option value="low">{lang === 'fa' ? 'کالاهای کم‌موجود' : 'Low Stock Only'}</option>
@@ -233,7 +232,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3"
           >
             <option value="active">{lang === 'fa' ? 'کالاهای فعال' : 'Active Products'}</option>
             <option value="archived">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Archived'}</option>
@@ -243,15 +242,19 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
       </div>
 
       {/* Products Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div className="shopino-table-card overflow-hidden rounded-xl">
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.loading}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.loading}
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.noRecords}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.noRecords}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-start text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
+              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]">
                 <tr>
                   <th className="px-4 py-3 text-start">{lang === 'fa' ? 'کد کالا' : 'Code'}</th>
                   <th className="px-4 py-3 text-start">{lang === 'fa' ? 'نام کالا و دسته‌بندی' : 'Product'}</th>
@@ -262,33 +265,38 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                   <th className="px-4 py-3 text-end">{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/80">
                 {filtered.map((p) => {
                   const isLow = p.stock_quantity <= p.min_stock_threshold;
                   const unitLabel = t.units[p.unit as keyof typeof t.units] || p.unit;
 
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="px-4 py-3 font-mono text-slate-500">
+                    <tr
+                      key={p.id}
+                      className="transition-colors hover:bg-slate-50 dark:hover:bg-[#16233B]/60"
+                    >
+                      <td className="px-4 py-3 font-mono text-slate-500 dark:text-[#94A3B8]">
                         <div>{p.sku}</div>
                         {p.is_demo ? (
-                          <span className="text-[10px] text-slate-400">{t.common.sampleRecord}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-[#94A3B8]/70">
+                            {t.common.sampleRecord}
+                          </span>
                         ) : null}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-bold text-slate-900 dark:text-white">{p.name}</div>
-                        <div className="mt-0.5 text-[11px] text-slate-400">
+                        <div className="font-bold text-slate-900 dark:text-[#F1F5F9]">{p.name}</div>
+                        <div className="mt-0.5 text-[11px] text-slate-400 dark:text-[#94A3B8]">
                           {p.category} · {unitLabel}
                           {p.notes ? ` · ${p.notes}` : ''}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-end font-mono text-slate-500 tabular-nums">
+                      <td className="px-4 py-3 text-end font-mono text-slate-500 tabular-nums dark:text-[#94A3B8]">
                         {p.cost_price > 0 ? formatCurrency(p.cost_price, lang) : '—'}
                       </td>
-                      <td className="px-4 py-3 text-end font-mono font-bold text-slate-900 tabular-nums dark:text-white">
+                      <td className="px-4 py-3 text-end font-mono font-bold text-slate-900 tabular-nums dark:text-[#F1F5F9]">
                         {formatCurrency(p.sale_price, lang)}
                       </td>
-                      <td className="px-4 py-3 text-end font-mono font-semibold text-blue-600 tabular-nums dark:text-blue-400">
+                      <td className="px-4 py-3 text-end font-mono font-semibold text-[#0d9488] tabular-nums dark:text-[#20D6C2]">
                         {p.wholesale_price > 0 ? formatCurrency(p.wholesale_price, lang) : '—'}
                       </td>
                       <td className="px-4 py-3 text-end">
@@ -314,7 +322,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                               setAdjustQty('5');
                             }}
                             title={lang === 'fa' ? 'تغییر سریع موجودی' : 'Quick Stock Adjust'}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-[#20D6C2]/40 hover:bg-slate-50 hover:text-[#0d9488] dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:border-[#20D6C2]/40 dark:hover:bg-[#16233B] dark:hover:text-[#20D6C2]"
                           >
                             <SlidersHorizontal className="h-4 w-4" />
                           </button>
@@ -322,7 +330,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                             type="button"
                             onClick={() => setEditingPrd({ ...p })}
                             title={t.common.edit}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:bg-[#16233B] dark:hover:text-[#F1F5F9]"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
@@ -330,7 +338,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                             type="button"
                             onClick={() => handleToggleArchive(p)}
                             title={t.common.archive}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:bg-[#16233B] dark:hover:text-amber-400"
                           >
                             <Archive className="h-4 w-4" />
                           </button>
@@ -347,23 +355,23 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
       {/* Quick Stock Adjustment Modal */}
       {adjustingPrd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050912]/70 p-4 backdrop-blur-xs">
+          <div className="shopino-glass-modal w-full max-w-md rounded-xl p-6">
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'تغییر سریع موجودی کالا' : 'Quick Stock Adjustment'}
               </h3>
               <button onClick={() => setAdjustingPrd(null)}>
-                <X className="h-4 w-4 text-slate-500" />
+                <X className="h-4 w-4 text-slate-500 dark:text-[#94A3B8]" />
               </button>
             </div>
 
             <form onSubmit={handleQuickAdjustStock} className="mt-4 space-y-4 text-xs">
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <div className="font-bold text-slate-900 dark:text-white">{adjustingPrd.name}</div>
-                <div className="mt-1 text-slate-500">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700/60 dark:bg-[#0B1220]/75">
+                <div className="font-bold text-slate-900 dark:text-[#F1F5F9]">{adjustingPrd.name}</div>
+                <div className="mt-1 text-slate-500 dark:text-[#94A3B8]">
                   {lang === 'fa' ? 'موجودی فعلی:' : 'Current Stock:'}{' '}
-                  <span className="font-mono font-bold text-blue-600">
+                  <span className="font-mono font-bold text-[#0d9488] dark:text-[#20D6C2]">
                     {formatNumber(adjustingPrd.stock_quantity, lang)}{' '}
                     {t.units[adjustingPrd.unit as keyof typeof t.units] || adjustingPrd.unit}
                   </span>
@@ -374,10 +382,10 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                 <button
                   type="button"
                   onClick={() => setAdjustType('addition')}
-                  className={`h-10 rounded-lg border font-semibold ${
+                  className={`h-10 rounded-lg border font-semibold transition-all ${
                     adjustType === 'addition'
-                      ? 'border-emerald-600 bg-emerald-600 text-white'
-                      : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      ? 'border-[#20D6C2] bg-[#20D6C2] font-bold text-[#041417] shadow-[0_0_16px_-4px_rgba(32,214,194,0.45)]'
+                      : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700/60 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]'
                   }`}
                 >
                   {lang === 'fa' ? '+ افزایش موجودی (ورود)' : '+ Add Stock'}
@@ -385,10 +393,10 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                 <button
                   type="button"
                   onClick={() => setAdjustType('reduction')}
-                  className={`h-10 rounded-lg border font-semibold ${
+                  className={`h-10 rounded-lg border font-semibold transition-all ${
                     adjustType === 'reduction'
-                      ? 'border-rose-600 bg-rose-600 text-white'
-                      : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                      ? 'border-rose-500 bg-rose-600 font-bold text-white shadow-[0_0_16px_-4px_rgba(244,63,94,0.45)]'
+                      : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700/60 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]'
                   }`}
                 >
                   {lang === 'fa' ? '- کاهش موجودی (خروج)' : '- Reduce Stock'}
@@ -396,7 +404,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'تعداد تغییر *' : 'Quantity *'}
                 </label>
                 <input
@@ -410,7 +418,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'علت تغییر موجودی (اختیاری)' : 'Reason / Note (Optional)'}
                 </label>
                 <input
@@ -437,20 +445,20 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
       {/* Edit Product Modal */}
       {editingPrd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050912]/70 p-4 backdrop-blur-xs overflow-y-auto">
+          <div className="shopino-glass-modal my-8 w-full max-w-lg rounded-xl p-6">
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                 {t.common.edit}: {editingPrd.name}
               </h3>
               <button onClick={() => setEditingPrd(null)}>
-                <X className="h-4 w-4 text-slate-500" />
+                <X className="h-4 w-4 text-slate-500 dark:text-[#94A3B8]" />
               </button>
             </div>
 
             <form onSubmit={handleSaveEdit} className="mt-4 space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'نام کالا *' : 'Product Name *'}
                 </label>
                 <input
@@ -464,7 +472,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'کد کالا' : 'Code'}
                   </label>
                   <input
@@ -475,7 +483,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'دسته‌بندی' : 'Category'}
                   </label>
                   <select
@@ -491,7 +499,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'واحد' : 'Unit'}
                   </label>
                   <select
@@ -510,7 +518,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'قیمت خرید (تومان)' : 'Purchase Cost'}
                   </label>
                   <input
@@ -522,7 +530,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'قیمت خرده‌فروشی *' : 'Retail Price *'}
                   </label>
                   <input
@@ -535,7 +543,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'قیمت عمده‌فروشی' : 'Wholesale Price'}
                   </label>
                   <input
@@ -552,7 +560,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'حداقل موجودی هشدار' : 'Low-Stock Threshold'}
                   </label>
                   <input
@@ -566,7 +574,7 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {t.common.notes}
                   </label>
                   <input
@@ -593,19 +601,19 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
 
       {/* Stock Movements History Modal */}
       {historyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050912]/70 p-4 backdrop-blur-xs overflow-y-auto">
+          <div className="shopino-glass-modal my-8 w-full max-w-2xl rounded-xl p-6">
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'تاریخچه تغییرات موجودی کالاها' : 'Recent Stock Movements'}
               </h3>
               <button onClick={() => setHistoryOpen(false)}>
-                <X className="h-4 w-4 text-slate-500" />
+                <X className="h-4 w-4 text-slate-500 dark:text-[#94A3B8]" />
               </button>
             </div>
             <div className="mt-4 max-h-96 overflow-y-auto">
               <table className="w-full text-start text-xs">
-                <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-800">
+                <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]">
                   <tr>
                     <th className="px-3 py-2 text-start">{t.common.date}</th>
                     <th className="px-3 py-2 text-start">{lang === 'fa' ? 'کالا' : 'Product'}</th>
@@ -617,22 +625,24 @@ export const ProductsPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTri
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {movements.map((m) => (
                     <tr key={m.id}>
-                      <td className="px-3 py-2.5 font-mono text-slate-500">
+                      <td className="px-3 py-2.5 font-mono text-slate-500 dark:text-[#94A3B8]">
                         {formatDate(m.created_at, lang, settings.usePersianCalendar)}
                       </td>
-                      <td className="px-3 py-2.5 font-medium">{m.product_name}</td>
+                      <td className="px-3 py-2.5 font-medium dark:text-[#F1F5F9]">{m.product_name}</td>
                       <td
                         className={`px-3 py-2.5 text-end font-mono font-bold ${
-                          m.quantity_change > 0 ? 'text-emerald-600' : 'text-rose-600'
+                          m.quantity_change > 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-rose-600 dark:text-rose-400'
                         }`}
                       >
                         {m.quantity_change > 0 ? '+' : ''}
                         {formatNumber(m.quantity_change, lang)}
                       </td>
-                      <td className="px-3 py-2.5 text-end font-mono">
+                      <td className="px-3 py-2.5 text-end font-mono dark:text-[#F1F5F9]">
                         {formatNumber(m.new_stock, lang)}
                       </td>
-                      <td className="px-3 py-2.5 text-slate-500">{m.reason}</td>
+                      <td className="px-3 py-2.5 text-slate-500 dark:text-[#94A3B8]">{m.reason}</td>
                     </tr>
                   ))}
                 </tbody>

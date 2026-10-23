@@ -181,15 +181,14 @@ export const QuickModals: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
     }
   };
 
-  const inputClass =
-    'mt-1 h-10 min-h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+  const inputClass = 'shopino-input mt-1 w-full px-3';
 
   return (
-    <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 overflow-y-auto">
-      <div className="my-8 w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+    <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-[#050912]/70 p-4 backdrop-blur-xs overflow-y-auto">
+      <div className="shopino-glass-modal my-8 w-full max-w-lg rounded-xl p-6">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3.5 dark:border-slate-800">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3.5 dark:border-slate-800">
+          <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
             {quickActionModal === 'customer' && t.common.addCustomer}
             {quickActionModal === 'product' && t.common.addProduct}
             {quickActionModal === 'payment' && t.common.recordPayment}
@@ -197,7 +196,7 @@ export const QuickModals: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
           <button
             type="button"
             onClick={() => setQuickActionModal(null)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-[#16233B]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -459,9 +458,9 @@ export const QuickModals: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
             </div>
 
             {/* Balance Before & After Preview */}
-            <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700/60 dark:bg-[#0B1220]/70">
               <div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
                   {lang === 'fa' ? 'بدهی قبل از پرداخت:' : 'Debt Before Payment:'}
                 </div>
                 <div className="mt-1 font-mono text-sm font-bold text-amber-600 dark:text-amber-400">
@@ -469,7 +468,7 @@ export const QuickModals: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) 
                 </div>
               </div>
               <div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
                   {lang === 'fa' ? 'مانده بدهی پس از پرداخت:' : 'Remaining Debt After:'}
                 </div>
                 <div className="mt-1 font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">

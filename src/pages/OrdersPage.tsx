@@ -76,10 +76,10 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center">
+      <div className="shopino-glass-card flex flex-col justify-between gap-4 rounded-xl p-5 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t.nav.orders}</h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">{t.nav.orders}</h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
             {lang === 'fa'
               ? 'فهرست تمامی فروش‌ها و سفارش‌ها، وضعیت آماده‌سازی، وضعیت تسویه و چاپ رسید فروش'
               : 'View all sales orders, fulfillment statuses, payment balances, and printable receipts.'}
@@ -97,9 +97,9 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div className="shopino-glass-card flex flex-wrap items-center justify-between gap-3 rounded-xl p-4">
         <div className="relative min-w-64 flex-1">
-          <Search className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400 dark:text-[#94A3B8]" />
           <input
             type="text"
             value={search}
@@ -109,7 +109,7 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
                 ? 'جستجوی شماره فاکتور یا نام مشتری...'
                 : 'Search order number or customer name...'
             }
-            className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 ps-9 pe-3 text-xs focus:border-blue-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input w-full ps-9 pe-3"
           />
         </div>
 
@@ -117,7 +117,7 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3"
           >
             <option value="all">{lang === 'fa' ? 'همه وضعیت‌های سفارش' : 'All Order Statuses'}</option>
             <option value="registered">{t.orderStatus.registered}</option>
@@ -129,7 +129,7 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
           <select
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3"
           >
             <option value="all">{lang === 'fa' ? 'همه وضعیت‌های پرداخت' : 'All Payment Statuses'}</option>
             <option value="paid">{t.paymentStatus.paid}</option>
@@ -140,15 +140,19 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
       </div>
 
       {/* Orders Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div className="shopino-table-card overflow-hidden rounded-xl">
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.loading}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.loading}
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.noRecords}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.noRecords}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-start text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
+              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]">
                 <tr>
                   <th className="px-4 py-3 text-start">{lang === 'fa' ? 'شماره فاکتور' : 'Order #'}</th>
                   <th className="px-4 py-3 text-start">{t.common.date}</th>
@@ -161,28 +165,33 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
                   <th className="px-4 py-3 text-end">{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/80">
                 {filtered.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <tr
+                    key={o.id}
+                    className="transition-colors hover:bg-slate-50 dark:hover:bg-[#16233B]/60"
+                  >
                     <td className="px-4 py-3">
                       <button
                         onClick={() => navigate(`/orders/${o.id}`)}
-                        className="font-mono font-bold text-blue-600 hover:underline dark:text-blue-400"
+                        className="font-mono font-bold text-[#0d9488] hover:underline dark:text-[#20D6C2]"
                       >
                         {o.order_number}
                       </button>
                       {o.is_demo ? (
-                        <div className="text-[10px] text-slate-400">{t.common.sampleRecord}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-[#94A3B8]/70">
+                          {t.common.sampleRecord}
+                        </div>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3 font-mono text-slate-500">
+                    <td className="px-4 py-3 font-mono text-slate-500 dark:text-[#94A3B8]">
                       {formatDate(o.order_date, lang, settings.usePersianCalendar)}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-slate-900 dark:text-white">
+                      <div className="font-semibold text-slate-900 dark:text-[#F1F5F9]">
                         {o.customer_name}
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-slate-400 dark:text-[#94A3B8]">
                         {o.pricing_type === 'wholesale'
                           ? t.customerType.wholesale
                           : t.customerType.retail}
@@ -215,7 +224,7 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
                         }
                       />
                     </td>
-                    <td className="px-4 py-3 text-end font-mono font-bold text-slate-900 tabular-nums dark:text-white">
+                    <td className="px-4 py-3 text-end font-mono font-bold text-slate-900 tabular-nums dark:text-[#F1F5F9]">
                       {formatCurrency(o.final_total, lang)}
                     </td>
                     <td className="px-4 py-3 text-end font-mono text-emerald-600 tabular-nums dark:text-emerald-400">
@@ -225,7 +234,7 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
                       className={`px-4 py-3 text-end font-mono font-bold tabular-nums ${
                         o.outstanding_balance > 0
                           ? 'text-amber-600 dark:text-amber-400'
-                          : 'text-slate-400'
+                          : 'text-slate-400 dark:text-[#94A3B8]'
                       }`}
                     >
                       {formatCurrency(o.outstanding_balance, lang)}
@@ -235,7 +244,7 @@ export const OrdersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTrigg
                         type="button"
                         onClick={() => navigate(`/orders/${o.id}`)}
                         title={t.common.viewDetails}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-[#20D6C2]/40 hover:bg-slate-50 hover:text-[#0d9488] dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:border-[#20D6C2]/40 dark:hover:bg-[#16233B] dark:hover:text-[#20D6C2]"
                       >
                         <Eye className="h-4 w-4" />
                       </button>

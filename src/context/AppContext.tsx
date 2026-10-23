@@ -56,6 +56,8 @@ interface AppContextType {
   toggleTheme: () => void;
   user: User | null;
   token: string | null;
+  allowDemoLogin: boolean;
+  authConfigLoaded: boolean;
   settings: BusinessSettings;
   includeDemo: boolean;
   setIncludeDemo: (v: boolean) => void;
@@ -114,12 +116,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [theme, setThemeState] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('shopino_theme');
-    return saved === 'dark' || saved === 'light' ? saved : 'light';
+    const saved = localStorage.getItem('shopino_theme_v2');
+    const resolved = saved === 'light' || saved === 'dark' ? saved : 'dark';
+    if (resolved === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    return resolved;
   });
 
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('shopino_token'));
   const [user, setUser] = useState<User | null>(null);
+  const [allowDemoLogin, setAllowDemoLogin] = useState<boolean>(false);
+  const [authConfigLoaded, setAuthConfigLoaded] = useState<boolean>(false);
   const [settings, setSettings] = useState<BusinessSettings>(defaultSettings);
   const [includeDemo, setIncludeDemo] = useState<boolean>(true);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -142,6 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [lang, dir]);
 
   useEffect(() => {
+    localStorage.setItem('shopino_theme_v2', theme);
     localStorage.setItem('shopino_theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -157,6 +168,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/auth/config')
+      .then((r) => r.json())
+      .then((data) => {
+        setAllowDemoLogin(Boolean(data?.allowDemoLogin));
+      })
+      .catch(() => {
+        setAllowDemoLogin(false);
+      })
+      .finally(() => {
+        setAuthConfigLoaded(true);
+      });
   }, []);
 
   const setLang = useCallback((l: Language) => {
@@ -221,6 +246,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const data = await apiFetch('/api/auth/me');
       setUser(data.user);
+      if (typeof data.allowDemoLogin === 'boolean') {
+        setAllowDemoLogin(data.allowDemoLogin);
+      }
       if (data.settings && Object.keys(data.settings).length > 0) {
         setSettings((prev) => ({ ...prev, ...data.settings }));
       }
@@ -273,6 +301,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleTheme,
         user,
         token,
+        allowDemoLogin,
+        authConfigLoaded,
         settings,
         includeDemo,
         setIncludeDemo,

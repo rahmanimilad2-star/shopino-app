@@ -135,16 +135,15 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
     }
   };
 
-  const inputClass =
-    'mt-1 h-10 min-h-[40px] w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+  const inputClass = 'shopino-input mt-1 w-full px-3';
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center">
+      <div className="shopino-glass-card flex flex-col justify-between gap-4 rounded-xl p-5 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{t.nav.customers}</h1>
-          <p className="mt-1 text-xs text-slate-500">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">{t.nav.customers}</h1>
+          <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
             {lang === 'fa'
               ? 'فهرست مشتریان خرده‌فروشی و عمده‌فروشی، سوابق خرید، پرداخت‌ها و مانده بدهی به تومان'
               : 'Manage retail and wholesale customers, purchase history, and outstanding Toman debts.'}
@@ -162,9 +161,9 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div className="shopino-glass-card flex flex-wrap items-center justify-between gap-3 rounded-xl p-4">
         <div className="relative min-w-64 flex-1">
-          <Search className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400" />
+          <Search className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400 dark:text-[#94A3B8]" />
           <input
             type="text"
             value={search}
@@ -174,7 +173,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                 ? 'جستجوی نام مشتری یا شماره تماس...'
                 : 'Search customer name or phone number...'
             }
-            className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 ps-9 pe-3 text-xs focus:border-blue-600 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input w-full ps-9 pe-3"
           />
         </div>
 
@@ -182,7 +181,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as any)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3"
           >
             <option value="all">{lang === 'fa' ? 'همه مشتریان (خرده و عمده)' : 'All Customer Types'}</option>
             <option value="retail">{t.customerType.retail}</option>
@@ -192,7 +191,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="h-10 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800"
+            className="shopino-input px-3"
           >
             <option value="active">{lang === 'fa' ? 'مشتریان فعال' : 'Active Only'}</option>
             <option value="archived">{lang === 'fa' ? 'بایگانی‌شده' : 'Archived'}</option>
@@ -202,15 +201,19 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
       </div>
 
       {/* Customers Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <div className="shopino-table-card overflow-hidden rounded-xl">
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.loading}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.loading}
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500">{t.common.noRecords}</div>
+          <div className="p-8 text-center text-xs text-slate-500 dark:text-[#94A3B8]">
+            {t.common.noRecords}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-start text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
+              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-800 dark:bg-[#0B1220]/70 dark:text-[#94A3B8]">
                 <tr>
                   <th className="px-4 py-3 text-start">{lang === 'fa' ? 'نام مشتری / فروشگاه' : 'Customer'}</th>
                   <th className="px-4 py-3 text-start">{lang === 'fa' ? 'تلفن و نوع خرید' : 'Phone & Type'}</th>
@@ -221,24 +224,27 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                   <th className="px-4 py-3 text-end">{t.common.actions}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/80">
                 {filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <tr
+                    key={c.id}
+                    className="transition-colors hover:bg-slate-50 dark:hover:bg-[#16233B]/60"
+                  >
                     <td className="px-4 py-3">
                       <button
                         onClick={() => navigate(`/customers/${c.id}`)}
-                        className="font-bold text-slate-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
+                        className="font-bold text-slate-900 transition-colors hover:text-[#0d9488] dark:text-[#F1F5F9] dark:hover:text-[#20D6C2]"
                       >
                         {c.name}
                       </button>
-                      <div className="mt-0.5 text-[11px] text-slate-400">
+                      <div className="mt-0.5 text-[11px] text-slate-400 dark:text-[#94A3B8]">
                         <span className="font-mono">{c.code}</span>
                         {c.notes ? ` · ${c.notes}` : ''}
                         {c.is_demo ? ` · ${t.common.sampleRecord}` : ''}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-mono text-slate-700 dark:text-slate-300">
+                      <div className="font-mono text-slate-700 dark:text-[#F1F5F9]">
                         {c.phone || '—'}
                       </div>
                       <div className="mt-1">
@@ -252,7 +258,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-end font-mono font-medium tabular-nums">
+                    <td className="px-4 py-3 text-end font-mono font-medium tabular-nums dark:text-[#F1F5F9]">
                       {formatCurrency(c.total_purchases, lang)}
                     </td>
                     <td className="px-4 py-3 text-end font-mono text-emerald-600 tabular-nums dark:text-emerald-400">
@@ -264,7 +270,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                           className={`font-mono font-bold tabular-nums ${
                             c.outstanding_balance > 0
                               ? 'text-amber-600 dark:text-amber-400'
-                              : 'text-slate-400'
+                              : 'text-slate-400 dark:text-[#94A3B8]'
                           }`}
                         >
                           {formatCurrency(c.outstanding_balance, lang)}
@@ -274,7 +280,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-slate-500">
+                    <td className="px-4 py-3 font-mono text-slate-500 dark:text-[#94A3B8]">
                       {formatDate(c.last_activity || c.created_at, lang, settings.usePersianCalendar)}
                     </td>
                     <td className="px-4 py-3 text-end">
@@ -283,7 +289,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                           type="button"
                           onClick={() => navigate(`/customers/${c.id}`)}
                           title={t.common.viewDetails}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-[#20D6C2]/40 hover:bg-slate-50 hover:text-[#0d9488] dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:border-[#20D6C2]/40 dark:hover:bg-[#16233B] dark:hover:text-[#20D6C2]"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -291,7 +297,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                           type="button"
                           onClick={() => setEditingCust({ ...c })}
                           title={t.common.edit}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:bg-[#16233B] dark:hover:text-[#F1F5F9]"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
@@ -299,7 +305,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                           type="button"
                           onClick={() => handleToggleArchive(c)}
                           title={t.common.archive}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:bg-[#16233B] dark:hover:text-amber-400"
                         >
                           <Archive className="h-4 w-4" />
                         </button>
@@ -307,7 +313,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                           type="button"
                           onClick={() => handleDeleteCustomer(c)}
                           title={t.common.delete}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:border-slate-700/60 dark:text-[#94A3B8] dark:hover:bg-[#16233B] dark:hover:text-red-400"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -323,20 +329,20 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
 
       {/* Edit Customer Modal */}
       {editingCust && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050912]/70 p-4 backdrop-blur-xs">
+          <div className="shopino-glass-modal w-full max-w-lg rounded-xl p-6">
+            <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                 {t.common.edit}: {editingCust.name}
               </h3>
               <button onClick={() => setEditingCust(null)}>
-                <X className="h-4 w-4 text-slate-500" />
+                <X className="h-4 w-4 text-slate-500 dark:text-[#94A3B8]" />
               </button>
             </div>
 
             <form onSubmit={handleSaveEdit} className="mt-4 space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'نام مشتری یا فروشگاه *' : 'Customer Name *'}
                 </label>
                 <input
@@ -350,7 +356,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'شماره تماس' : 'Phone'}
                   </label>
                   <input
@@ -361,7 +367,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                     {lang === 'fa' ? 'نوع مشتری' : 'Customer Type'}
                   </label>
                   <select
@@ -378,7 +384,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {lang === 'fa' ? 'نشانی' : 'Address'}
                 </label>
                 <input
@@ -390,7 +396,7 @@ export const CustomersPage: React.FC<{ refreshTrigger?: number }> = ({ refreshTr
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                   {t.common.notes}
                 </label>
                 <input

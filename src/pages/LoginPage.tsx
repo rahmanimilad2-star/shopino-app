@@ -11,6 +11,7 @@ export const LoginPage: React.FC = () => {
     t,
     theme,
     toggleTheme,
+    allowDemoLogin,
     settings,
     navigate,
     apiFetch,
@@ -19,9 +20,19 @@ export const LoginPage: React.FC = () => {
     showToast,
   } = useApp();
 
-  const [email, setEmail] = useState('admin@sellerhub.io');
-  const [password, setPassword] = useState('SellerHub@2026');
+  const [email, setEmail] = useState(() => (allowDemoLogin ? 'admin@sellerhub.io' : ''));
+  const [password, setPassword] = useState(() => (allowDemoLogin ? 'SellerHub@2026' : ''));
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (allowDemoLogin && !email && !password) {
+      setEmail('admin@sellerhub.io');
+      setPassword('SellerHub@2026');
+    } else if (!allowDemoLogin && email === 'admin@sellerhub.io' && password === 'SellerHub@2026') {
+      setEmail('');
+      setPassword('');
+    }
+  }, [allowDemoLogin]);
 
   const BackIcon = dir === 'rtl' ? ArrowRight : ArrowLeft;
 
@@ -63,12 +74,15 @@ export const LoginPage: React.FC = () => {
   const displayBrand = lang === 'fa' ? settings.businessNameFa || 'شاپینو' : settings.businessName || 'Shopino';
 
   return (
-    <div dir={dir} className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div dir={dir} className="shopino-app-bg flex min-h-screen flex-col">
+      <div className="shopino-ambient-orb" aria-hidden="true" />
+      <div className="shopino-grid-overlay" aria-hidden="true" />
+
       {/* Header */}
-      <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
+      <header className="shopino-glass-header relative z-10 flex h-16 items-center justify-between px-4 sm:px-6">
         <button
           onClick={() => navigate('/landing')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 transition-colors hover:text-slate-900 dark:text-[#94A3B8] dark:hover:text-[#F1F5F9]"
         >
           <BackIcon className="h-4 w-4" />
           <span>{t.nav.landing}</span>
@@ -78,9 +92,9 @@ export const LoginPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setLang(lang === 'en' ? 'fa' : 'en')}
-            className="m-0 inline-flex h-10 min-h-[40px] shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold leading-none text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            className="m-0 inline-flex h-10 min-h-[40px] shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-200/90 bg-white/90 px-3 text-xs font-semibold leading-none text-slate-700 transition-all hover:border-[#20D6C2]/40 hover:bg-slate-50 dark:border-slate-700/50 dark:bg-[#111C30]/85 dark:text-[#F1F5F9] dark:hover:border-[#20D6C2]/40 dark:hover:bg-[#16233B]"
           >
-            <Globe className="h-4 w-4 text-slate-500" />
+            <Globe className="h-4 w-4 text-slate-500 dark:text-[#20D6C2]" />
             <span>{lang === 'en' ? 'فارسی' : 'EN'}</span>
           </button>
           <IconButton
@@ -91,47 +105,49 @@ export const LoginPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-lg sm:p-8 dark:border-slate-800 dark:bg-slate-900">
+      <div className="shopino-page-enter relative z-10 flex flex-1 items-center justify-center p-4">
+        <div className="shopino-glass-modal w-full max-w-md rounded-2xl p-6 sm:p-8">
           <div className="text-center">
-            <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-bold text-white">
+            <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-[#20D6C2]/40 bg-gradient-to-br from-[#20D6C2] to-[#7C83FF] font-mono text-sm font-extrabold text-[#041417] shadow-[0_0_20px_-4px_rgba(32,214,194,0.55)]">
               {settings.logoText || 'SH'}
             </span>
-            <h1 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">
+            <h1 className="mt-3 text-xl font-bold text-slate-900 dark:text-[#F1F5F9]">
               {lang === 'fa' ? `ورود به پنل مدیریت ${displayBrand}` : `Sign in to ${displayBrand}`}
             </h1>
-            <p className="mt-1 text-xs text-slate-500">{t.brandSubtitle}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">{t.brandSubtitle}</p>
           </div>
 
           <form onSubmit={handleLogin} className="mt-6 space-y-4 text-xs">
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'ایمیل کاربری' : 'Email Address'}
               </label>
               <div className="relative mt-1">
-                <Mail className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400" />
+                <Mail className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400 dark:text-[#94A3B8]" />
                 <input
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-slate-300 bg-white ps-9 pe-3 font-mono text-xs focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+                  className="shopino-input w-full ps-9 pe-3 font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300">
+              <label className="block font-semibold text-slate-700 dark:text-[#F1F5F9]">
                 {lang === 'fa' ? 'رمز عبور' : 'Password'}
               </label>
               <div className="relative mt-1">
-                <Lock className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400" />
+                <Lock className="pointer-events-none absolute top-3 start-3 h-4 w-4 text-slate-400 dark:text-[#94A3B8]" />
                 <input
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-slate-300 bg-white ps-9 pe-3 font-mono text-xs focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+                  className="shopino-input w-full ps-9 pe-3 font-mono"
                 />
               </div>
             </div>
@@ -141,32 +157,34 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
-          {/* One-Click Demo Login */}
-          <div className="mt-6 border-t border-slate-200 pt-4 text-xs dark:border-slate-800">
-            <div className="mb-2.5 text-center font-semibold text-slate-500">
-              {lang === 'fa'
-                ? 'ورود سریع به نسخه نمایشی (دمو):'
-                : 'Quick One-Click Demo Access:'}
+          {/* One-Click Demo Login (only shown when allowDemoLogin is enabled) */}
+          {allowDemoLogin && (
+            <div className="mt-6 border-t border-slate-200/80 pt-4 text-xs dark:border-slate-800">
+              <div className="mb-2.5 text-center font-semibold text-slate-500 dark:text-[#94A3B8]">
+                {lang === 'fa'
+                  ? 'ورود سریع به نسخه نمایشی (دمو):'
+                  : 'Quick One-Click Demo Access:'}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickDemoLogin('owner')}
+                  disabled={loading}
+                >
+                  {t.roles.owner}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickDemoLogin('sales')}
+                  disabled={loading}
+                >
+                  {t.roles.sales}
+                </Button>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickDemoLogin('owner')}
-                disabled={loading}
-              >
-                {t.roles.owner}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickDemoLogin('sales')}
-                disabled={loading}
-              >
-                {t.roles.sales}
-              </Button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

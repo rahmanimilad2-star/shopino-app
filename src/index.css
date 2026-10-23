@@ -2,6 +2,30 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --shopino-bg-main: #f8fafc;
+  --shopino-bg-surface: #ffffff;
+  --shopino-bg-elevated: #f1f5f9;
+  --shopino-accent-primary: #0d9488;
+  --shopino-accent-turquoise: #20D6C2;
+  --shopino-accent-secondary: #7C83FF;
+  --shopino-text-primary: #0f172a;
+  --shopino-text-secondary: #64748b;
+  --shopino-border-subtle: rgba(148, 163, 184, 0.22);
+}
+
+.dark {
+  --shopino-bg-main: #0B1220;
+  --shopino-bg-surface: #111C30;
+  --shopino-bg-elevated: #16233B;
+  --shopino-accent-primary: #20D6C2;
+  --shopino-accent-turquoise: #20D6C2;
+  --shopino-accent-secondary: #7C83FF;
+  --shopino-text-primary: #F1F5F9;
+  --shopino-text-secondary: #94A3B8;
+  --shopino-border-subtle: rgba(148, 163, 184, 0.14);
+}
+
 @layer base {
   html[dir="ltr"] {
     font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -11,6 +35,13 @@
     font-family: "Vazirmatn", "Plus Jakarta Sans", Tahoma, sans-serif;
   }
 
+  body {
+    background-color: var(--shopino-bg-main);
+    color: var(--shopino-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   .font-mono,
   .tabular-nums {
     font-family: "JetBrains Mono", "Vazirmatn", monospace;
@@ -18,17 +49,229 @@
   }
 }
 
+/* Ambient Fintech Background Atmosphere */
+@keyframes shopinoAmbientDrift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.5%, -1.5%, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes shopinoFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shopino-app-bg {
+  position: relative;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.dark .shopino-app-bg {
+  background-color: #0B1220;
+  color: #F1F5F9;
+  background-image:
+    radial-gradient(circle at 14% 12%, rgba(32, 214, 194, 0.09) 0%, transparent 42%),
+    radial-gradient(circle at 86% 18%, rgba(124, 131, 255, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 88%, rgba(32, 214, 194, 0.05) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+.shopino-ambient-orb {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.45;
+}
+
+.dark .shopino-ambient-orb {
+  opacity: 1;
+}
+
+.shopino-ambient-orb::before,
+.shopino-ambient-orb::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  animation: shopinoAmbientDrift 24s ease-in-out infinite;
+}
+
+.shopino-ambient-orb::before {
+  top: -10%;
+  inline-start: -6%;
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, rgba(32, 214, 194, 0.11) 0%, rgba(32, 214, 194, 0) 70%);
+}
+
+.shopino-ambient-orb::after {
+  bottom: -12%;
+  inline-end: -6%;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(124, 131, 255, 0.1) 0%, rgba(124, 131, 255, 0) 70%);
+  animation-delay: -12s;
+}
+
+/* Subtle Grid Texture Overlay */
+.shopino-grid-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: linear-gradient(to right, rgba(148, 163, 184, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: radial-gradient(ellipse at center, black 35%, transparent 85%);
+}
+
+/* Controlled Glassmorphism Surfaces */
+.shopino-glass-card {
+  background-color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(12px);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.dark .shopino-glass-card {
+  background-color: rgba(17, 28, 48, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  box-shadow: 0 10px 30px -6px rgba(2, 6, 23, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(14px);
+}
+
+.shopino-glass-header {
+  background-color: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(16px);
+}
+
+.dark .shopino-glass-header {
+  background-color: rgba(11, 18, 32, 0.82);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.shopino-glass-sidebar {
+  background-color: rgba(255, 255, 255, 0.96);
+  border-inline-end: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(16px);
+}
+
+.dark .shopino-glass-sidebar {
+  background-color: rgba(14, 23, 40, 0.92);
+  border-inline-end: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 4px 0 24px -4px rgba(2, 6, 23, 0.5);
+  backdrop-filter: blur(18px);
+}
+
+.shopino-glass-modal {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.18);
+}
+
+.dark .shopino-glass-modal {
+  background-color: rgba(17, 28, 48, 0.95);
+  border: 1px solid rgba(32, 214, 194, 0.22);
+  box-shadow: 0 24px 60px -12px rgba(2, 6, 23, 0.78), 0 0 28px -8px rgba(32, 214, 194, 0.12),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px);
+}
+
+/* Crisp Data Table Surface */
+.shopino-table-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.03);
+}
+
+.dark .shopino-table-card {
+  background-color: #111C30;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 10px 30px -6px rgba(2, 6, 23, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Form Controls */
+.shopino-input {
+  height: 2.5rem;
+  min-height: 40px;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 0.75rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.shopino-input:focus {
+  outline: none;
+  border-color: #20D6C2;
+  box-shadow: 0 0 0 3px rgba(32, 214, 194, 0.16);
+}
+
+.dark .shopino-input {
+  border-color: rgba(148, 163, 184, 0.18);
+  background-color: rgba(11, 18, 32, 0.75);
+  color: #F1F5F9;
+}
+
+.dark .shopino-input::placeholder {
+  color: #64748b;
+}
+
+.dark .shopino-input:focus {
+  border-color: #20D6C2;
+  background-color: rgba(11, 18, 32, 0.95);
+  box-shadow: 0 0 0 3px rgba(32, 214, 194, 0.18);
+}
+
+.shopino-page-enter {
+  animation: shopinoFadeUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shopino-ambient-orb::before,
+  .shopino-ambient-orb::after,
+  .shopino-page-enter {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 @media print {
-  .no-print {
+  .no-print,
+  .shopino-ambient-orb,
+  .shopino-grid-overlay {
     display: none !important;
   }
-  body {
+  body,
+  .shopino-app-bg {
     background: #ffffff !important;
+    background-image: none !important;
     color: #000000 !important;
   }
   .print-container {
     box-shadow: none !important;
     border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
