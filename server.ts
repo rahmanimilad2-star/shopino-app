@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
@@ -329,6 +330,16 @@ function computeCustomerLedgerSummary(customerId: string, includeDemo: boolean) 
 }
 
 export async function createApp() {
+  const sessionSecret = process.env.SESSION_SECRET;
+  if (
+    !sessionSecret ||
+    sessionSecret.length < 32 ||
+    sessionSecret === 'change-this-to-a-64-char-random-hex-secret-in-production'
+  ) {
+    throw new Error(
+      'A strong SESSION_SECRET of at least 32 characters must be configured before starting Shopino.'
+    );
+  }
   await initDb();
 
   const app = express();
