@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html[dir="ltr"] {
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  html[dir="rtl"] {
+    font-family: "Vazirmatn", "Plus Jakarta Sans", Tahoma, sans-serif;
+  }
+
+  .font-mono,
+  .tabular-nums {
+    font-family: "JetBrains Mono", "Vazirmatn", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .print-container {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

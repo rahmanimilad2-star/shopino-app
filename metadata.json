@@ -1,0 +1,6 @@
+{
+  "name": "SellerHub — Bilingual Sales, CRM & Order Management Platform",
+  "description": "A bilingual (Persian RTL & English LTR) business management platform for managing customers, products, inventory, orders, payments, receivables, expenses, suppliers, and financial reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
