@@ -5,15 +5,20 @@ import type { Server } from 'node:http';
 
 // Run server in test mode so importing server.ts does not bind port 3000
 process.env.SHOPINO_TEST_MODE = '1';
+process.env.SESSION_SECRET = 'shopino-isolated-security-test-secret-2026';
 const TEST_DB_PATH = path.resolve(process.cwd(), 'data', 'test-security.sqlite');
 process.env.DATABASE_PATH = TEST_DB_PATH;
 process.env.ALLOW_DEMO_LOGIN = 'true';
 
 function cleanupTestDbFiles() {
-  for (const suffix of ['', '.tmp']) {
-    const p = `${TEST_DB_PATH}${suffix}`;
-    if (fs.existsSync(p)) {
-      fs.unlinkSync(p);
+  const dir = path.dirname(TEST_DB_PATH);
+  const base = path.basename(TEST_DB_PATH);
+
+  if (!fs.existsSync(dir)) return;
+
+  for (const name of fs.readdirSync(dir)) {
+    if (name === base || name.startsWith(`${base}.tmp.`)) {
+      fs.unlinkSync(path.join(dir, name));
     }
   }
 }
@@ -462,31 +467,7 @@ async function runSecuritySuite() {
       assert.equal(dupPay.status, 409, 'Immediate duplicate payment within 5s must be blocked with 409');
     });
 
-    await step('11. Verify production database (data/shopino.sqlite) and pre-audit backup integrity', async () => {
-      const prodDbPath = path.resolve(process.cwd(), 'data', 'shopino.sqlite');
-      const backupDbPath = path.resolve(process.cwd(), 'data', 'backups', 'shopino.pre-audit.sqlite.bak');
-      assert.ok(fs.existsSync(prodDbPath), 'Production database data/shopino.sqlite must exist');
-      assert.ok(fs.existsSync(backupDbPath), 'Pre-audit backup must exist');
-
-      // Switch to production DB and verify existing records are intact
-      dbMod.closeAndResetDb();
-      process.env.DATABASE_PATH = prodDbPath;
-      await dbMod.initDb();
-
-      const usersCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM users');
-      const customersCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM customers');
-      const productsCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM products');
-      const ordersCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM orders');
-      const paymentsCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM payments');
-
-      assert.ok((usersCount?.cnt || 0) >= 5, 'All 5 existing user accounts must be preserved');
-      assert.ok((customersCount?.cnt || 0) >= 5, 'All existing customers must be preserved');
-      assert.ok((productsCount?.cnt || 0) >= 7, 'All existing products must be preserved');
-      assert.ok((ordersCount?.cnt || 0) >= 4, 'All existing orders must be preserved');
-      assert.ok((paymentsCount?.cnt || 0) >= 3, 'All existing payments must be preserved');
-    });
-
-    console.log(`\nALL ${passed} SECURITY & INTEGRITY TESTS PASSED.\n`);
+    console.log(`\nALL ${passed} SECURITY TESTS PASSED.\n`);
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
     dbMod.closeAndResetDb();

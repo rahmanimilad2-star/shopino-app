@@ -138,7 +138,10 @@ export function verifyPassword(
 }
 
 export function hashSessionToken(rawToken: string): string {
-  const secret = process.env.SESSION_SECRET || 'shopino-default-session-secret-2026';
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error('SESSION_SECRET must contain at least 32 characters.');
+  }
   return 'sha256$' + crypto.createHmac('sha256', secret).update(rawToken).digest('hex');
 }
 
