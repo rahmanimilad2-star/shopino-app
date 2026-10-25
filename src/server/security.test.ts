@@ -5,20 +5,15 @@ import type { Server } from 'node:http';
 
 // Run server in test mode so importing server.ts does not bind port 3000
 process.env.SHOPINO_TEST_MODE = '1';
-process.env.SESSION_SECRET = 'shopino-isolated-security-test-secret-2026';
 const TEST_DB_PATH = path.resolve(process.cwd(), 'data', 'test-security.sqlite');
 process.env.DATABASE_PATH = TEST_DB_PATH;
 process.env.ALLOW_DEMO_LOGIN = 'true';
 
 function cleanupTestDbFiles() {
-  const dir = path.dirname(TEST_DB_PATH);
-  const base = path.basename(TEST_DB_PATH);
-
-  if (!fs.existsSync(dir)) return;
-
-  for (const name of fs.readdirSync(dir)) {
-    if (name === base || name.startsWith(`${base}.tmp.`)) {
-      fs.unlinkSync(path.join(dir, name));
+  for (const suffix of ['', '.tmp']) {
+    const p = `${TEST_DB_PATH}${suffix}`;
+    if (fs.existsSync(p)) {
+      fs.unlinkSync(p);
     }
   }
 }
@@ -467,11 +462,297 @@ async function runSecuritySuite() {
       assert.equal(dupPay.status, 409, 'Immediate duplicate payment within 5s must be blocked with 409');
     });
 
-    console.log(`\nALL ${passed} SECURITY TESTS PASSED.\n`);
+    let exportedSnapshot: any = null;
+    const createdTestSafetyBackups: string[] = [];
+
+    await step('11. Backup & Restore RBAC: reject unauthenticated and non-owner roles (401/403)', async () => {
+      // Unauthenticated requests -> 401
+      assert.equal((await api('/api/backup/export')).status, 401);
+      assert.equal((await api('/api/backup/restore', { method: 'POST', body: {} })).status, 401);
+
+      // Non-owner roles -> 403
+      for (const nonOwnerRole of ['manager', 'sales', 'accountant', 'inventory']) {
+        const roleLogin = await api('/api/auth/demo-role', {
+          method: 'POST',
+          body: { role: nonOwnerRole },
+        });
+        assert.equal(roleLogin.status, 200);
+        const roleToken = roleLogin.data.token as string;
+
+        const expRes = await api('/api/backup/export', { token: roleToken });
+        assert.equal(expRes.status, 403, `Role ${nonOwnerRole} must not be allowed to export backups`);
+
+        const restRes = await api('/api/backup/restore', {
+          method: 'POST',
+          token: roleToken,
+          body: { format: 'shopino-backup' },
+        });
+        assert.equal(restRes.status, 403, `Role ${nonOwnerRole} must not be allowed to restore backups`);
+      }
+    });
+
+    await step('12. Backup Export (Owner): valid format, SHA-256 checksum, and credential sanitization', async () => {
+      const expRes = await api('/api/backup/export', { token: ownerToken });
+      assert.equal(expRes.status, 200);
+      assert.ok(
+        expRes.headers.get('content-disposition')?.includes('shopino-backup-'),
+        'Export response must include attachment Content-Disposition header'
+      );
+
+      exportedSnapshot = expRes.data;
+      assert.equal(exportedSnapshot.format, 'shopino-backup');
+      assert.equal(exportedSnapshot.schemaVersion, 1);
+      assert.match(exportedSnapshot.sha256Checksum, /^[a-f0-9]{64}$/);
+      assert.ok(exportedSnapshot.tables && typeof exportedSnapshot.tables === 'object');
+
+      for (const table of dbMod.REQUIRED_BACKUP_TABLES) {
+        assert.ok(Array.isArray(exportedSnapshot.tables[table]), `Table ${table} must be an array`);
+        assert.equal(
+          exportedSnapshot.recordCounts[table],
+          exportedSnapshot.tables[table].length,
+          `recordCounts.${table} must match actual array length`
+        );
+      }
+
+      // Verify server checksum calculation matches exported tables
+      const recomputed = dbMod.computeBackupChecksum(exportedSnapshot.tables);
+      assert.equal(exportedSnapshot.sha256Checksum, recomputed);
+
+      // Ensure credentials and session tokens are never leaked in exported JSON
+      const rawJsonString = JSON.stringify(exportedSnapshot);
+      assert.ok(!rawJsonString.includes('password_hash'), 'password_hash must never be exported');
+      assert.ok(!rawJsonString.includes('scrypt$'), 'scrypt password hashes must never be exported');
+      assert.equal(exportedSnapshot.tables.sessions, undefined, 'sessions table must never be exported');
+    });
+
+    await step('13. Backup Restore Validation: reject invalid/tampered backups and preserve existing data', async () => {
+      // Mutate current database after the snapshot was exported so we can prove failed restores preserve live changes
+      const newCustRes = await api('/api/customers', {
+        method: 'POST',
+        token: ownerToken,
+        body: {
+          name: 'مشتری جدید پس از پشتیبان‌گیری',
+          phone: '09129998877',
+          customer_type: 'wholesale',
+        },
+      });
+      assert.equal(newCustRes.status, 201);
+      const postBackupCustomerId = newCustRes.data.id as string;
+
+      const newPrdRes = await api('/api/products', {
+        method: 'POST',
+        token: ownerToken,
+        body: {
+          name: 'کالای آزمایشی پس از پشتیبان‌گیری',
+          sku: 'SKU-POST-BAK-99',
+          sale_price: 450000,
+          wholesale_price: 410000,
+          cost_price: 350000,
+          stock_quantity: 25,
+        },
+      });
+      assert.equal(newPrdRes.status, 201);
+      const postBackupProductId = newPrdRes.data.id as string;
+
+      // 13a. Invalid format or schemaVersion
+      const badFormat = await api('/api/backup/restore', {
+        method: 'POST',
+        token: ownerToken,
+        body: { ...exportedSnapshot, format: 'wrong-format' },
+      });
+      assert.equal(badFormat.status, 400);
+
+      const badVersion = await api('/api/backup/restore', {
+        method: 'POST',
+        token: ownerToken,
+        body: { ...exportedSnapshot, schemaVersion: 999 },
+      });
+      assert.equal(badVersion.status, 400);
+
+      // 13b. Tampered data with original checksum (client modifies product price/stock without updating checksum)
+      const tamperedPricePkg = structuredClone(exportedSnapshot);
+      tamperedPricePkg.tables.products[0].sale_price_cents = 0;
+      const tamperedPriceRes = await api('/api/backup/restore', {
+        method: 'POST',
+        token: ownerToken,
+        body: tamperedPricePkg,
+      });
+      assert.equal(
+        tamperedPriceRes.status,
+        400,
+        'Tampered backup content with mismatched SHA-256 checksum must be rejected'
+      );
+
+      // 13c. Tampered data where attacker recomputes a valid SHA-256 checksum over invalid business data
+      const negativeStockPkg = structuredClone(exportedSnapshot);
+      negativeStockPkg.tables.products[0].stock_quantity = -50;
+      negativeStockPkg.sha256Checksum = dbMod.computeBackupChecksum(negativeStockPkg.tables);
+      const negStockRes = await api('/api/backup/restore', {
+        method: 'POST',
+        token: ownerToken,
+        body: negativeStockPkg,
+      });
+      assert.equal(
+        negStockRes.status,
+        400,
+        'Backup with negative stock must be rejected even if attacker recomputes checksum'
+      );
+
+      // 13d. Broken foreign key reference with recomputed checksum
+      const brokenFkPkg = structuredClone(exportedSnapshot);
+      brokenFkPkg.tables.order_items[0].product_id = 'prd_non_existent_99999';
+      brokenFkPkg.sha256Checksum = dbMod.computeBackupChecksum(brokenFkPkg.tables);
+      const brokenFkRes = await api('/api/backup/restore', {
+        method: 'POST',
+        token: ownerToken,
+        body: brokenFkPkg,
+      });
+      assert.equal(brokenFkRes.status, 400, 'Backup with broken foreign key reference must be rejected');
+
+      // 13e. Duplicate SKU across two products with recomputed checksum
+      const dupSkuPkg = structuredClone(exportedSnapshot);
+      if (dupSkuPkg.tables.products.length >= 2) {
+        dupSkuPkg.tables.products[1].sku = dupSkuPkg.tables.products[0].sku;
+        dupSkuPkg.sha256Checksum = dbMod.computeBackupChecksum(dupSkuPkg.tables);
+        const dupSkuRes = await api('/api/backup/restore', {
+          method: 'POST',
+          token: ownerToken,
+          body: dupSkuPkg,
+        });
+        assert.equal(dupSkuRes.status, 400, 'Backup with duplicate SKU must be rejected');
+      }
+
+      // Verify that all current records created AFTER the snapshot are still intact after all failed restore attempts
+      const checkCustStillExists = dbMod.queryOne('SELECT * FROM customers WHERE id = ?', [
+        postBackupCustomerId,
+      ]);
+      const checkPrdStillExists = dbMod.queryOne('SELECT * FROM products WHERE id = ?', [
+        postBackupProductId,
+      ]);
+      assert.ok(checkCustStillExists, 'Existing customer created after backup must be preserved on failed restore');
+      assert.ok(checkPrdStillExists, 'Existing product created after backup must be preserved on failed restore');
+      assert.equal(checkPrdStillExists.stock_quantity, 25);
+    });
+
+    await step('14. Successful Backup Restore, Pre-Restore Safety Backup Verification, & Credential Continuity', async () => {
+      // Perform valid restoration using the exported snapshot
+      const restoreRes = await api('/api/backup/restore', {
+        method: 'POST',
+        token: ownerToken,
+        body: { backup: exportedSnapshot, confirm: true },
+      });
+      assert.equal(restoreRes.status, 200);
+      assert.equal(restoreRes.data.ok, true);
+      assert.equal(restoreRes.data.safetyBackupCreated, true);
+      assert.ok(
+        typeof restoreRes.data.safetyBackupFile === 'string' &&
+          restoreRes.data.safetyBackupFile.startsWith('shopino-pre-restore-') &&
+          restoreRes.data.safetyBackupFile.endsWith('.sqlite.bak'),
+        'Restore must create a pre-restore .sqlite.bak safety backup file'
+      );
+
+      const safetyPath = path.resolve(
+        path.dirname(TEST_DB_PATH),
+        'backups',
+        restoreRes.data.safetyBackupFile
+      );
+      createdTestSafetyBackups.push(safetyPath);
+      assert.ok(fs.existsSync(safetyPath), 'Pre-restore safety backup file must exist on disk');
+      const safetyBuf = fs.readFileSync(safetyPath);
+      assert.ok(safetyBuf.length > 0, 'Pre-restore safety backup file must be non-empty');
+      assert.equal(
+        safetyBuf.subarray(0, 16).toString('utf8'),
+        'SQLite format 3\0',
+        'Pre-restore safety backup must be a valid SQLite 3 database file'
+      );
+
+      // Verify that post-snapshot records were rolled back to the snapshot state
+      const postCustAfterRestore = dbMod.queryOne(
+        "SELECT * FROM customers WHERE name = 'مشتری جدید پس از پشتیبان‌گیری'"
+      );
+      const postPrdAfterRestore = dbMod.queryOne(
+        "SELECT * FROM products WHERE sku = 'SKU-POST-BAK-99'"
+      );
+      assert.equal(postCustAfterRestore, undefined, 'Post-snapshot customer should not exist after restoring earlier snapshot');
+      assert.equal(postPrdAfterRestore, undefined, 'Post-snapshot product should not exist after restoring earlier snapshot');
+
+      // Verify restored record counts match the snapshot
+      for (const table of [
+        'settings',
+        'users',
+        'customers',
+        'customer_notes',
+        'products',
+        'orders',
+        'order_items',
+        'payments',
+        'inventory_movements',
+        'notifications',
+      ] as const) {
+        const row = dbMod.queryOne<{ cnt: number }>(`SELECT COUNT(*) as cnt FROM ${table}`);
+        assert.equal(
+          row?.cnt,
+          exportedSnapshot.recordCounts[table],
+          `Restored count for ${table} must match snapshot count`
+        );
+      }
+
+      // Verify owner session is still active AND owner password login still works after restore
+      const meAfterRestore = await api('/api/auth/me', { token: ownerToken });
+      assert.equal(meAfterRestore.status, 200);
+      assert.equal(meAfterRestore.data.user.role, 'owner');
+
+      const loginAfterRestore = await api('/api/auth/login', {
+        method: 'POST',
+        body: { email: 'admin@sellerhub.io', password: 'SellerHub@2026' },
+      });
+      assert.equal(
+        loginAfterRestore.status,
+        200,
+        'Owner password hash must be preserved across backup restoration'
+      );
+    });
+
+    await step('15. Verify production database (data/shopino.sqlite) integrity', async () => {
+      const prodDbPath = path.resolve(process.cwd(), 'data', 'shopino.sqlite');
+
+      // Switch to production DB and verify existing records are intact
+      dbMod.closeAndResetDb();
+      process.env.DATABASE_PATH = prodDbPath;
+      await dbMod.initDb();
+      assert.ok(fs.existsSync(prodDbPath), 'Production database data/shopino.sqlite must exist');
+
+      const usersCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM users');
+      const customersCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM customers');
+      const productsCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM products');
+      const ordersCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM orders');
+      const paymentsCount = dbMod.queryOne<{ cnt: number }>('SELECT COUNT(*) as cnt FROM payments');
+
+      assert.ok((usersCount?.cnt || 0) >= 5, 'All 5 existing user accounts must be preserved');
+      assert.ok((customersCount?.cnt || 0) >= 5, 'All existing customers must be preserved');
+      assert.ok((productsCount?.cnt || 0) >= 7, 'All existing products must be preserved');
+      assert.ok((ordersCount?.cnt || 0) >= 4, 'All existing orders must be preserved');
+      assert.ok((paymentsCount?.cnt || 0) >= 3, 'All existing payments must be preserved');
+    });
+
+    console.log(`\nALL ${passed} SECURITY, BACKUP & INTEGRITY TESTS PASSED.\n`);
   } finally {
     await new Promise<void>((resolve) => server.close(() => resolve()));
     dbMod.closeAndResetDb();
     cleanupTestDbFiles();
+    // Clean up temporary test pre-restore backup files created by the test suite
+    const backupDir = path.resolve(process.cwd(), 'data', 'backups');
+    if (fs.existsSync(backupDir)) {
+      for (const f of fs.readdirSync(backupDir)) {
+        if (f.startsWith('shopino-pre-restore-')) {
+          try {
+            fs.unlinkSync(path.join(backupDir, f));
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
   }
 }
 

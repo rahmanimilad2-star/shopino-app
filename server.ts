@@ -18,6 +18,8 @@ import {
   seedDemoData,
   purgeDemoData,
   createDatabaseBackup,
+  exportDatabaseSnapshot,
+  restoreDatabaseSnapshot,
 } from './src/server/db.ts';
 
 const PORT = 3000;
@@ -398,6 +400,7 @@ export async function createApp() {
     next();
   });
 
+  app.use('/api/backup/restore', express.json({ limit: '10mb' }));
   app.use(express.json({ limit: '256kb' }));
 
   // Handle malformed JSON payloads safely without leaking stack traces
@@ -2402,6 +2405,84 @@ export async function createApp() {
       purgeDemoData();
       logAudit(req.user, 'PURGE_DEMO', 'system', 'demo_data', 'Purged sample demo records');
       res.json({ ok: true });
+    }
+  );
+
+  // =========================================================================
+  // 10. AUTHORITATIVE DATABASE BACKUP & RESTORE ROUTES (OWNER ONLY)
+  // =========================================================================
+  app.get(
+    '/api/backup/export',
+    requireRole('owner'),
+    (req: Request, res: Response) => {
+      try {
+        const snapshot = exportDatabaseSnapshot({
+          id: req.user!.id,
+          name: req.user!.name,
+          email: req.user!.email,
+        });
+        logAudit(
+          req.user,
+          'BACKUP_EXPORT',
+          'system',
+          'database',
+          `Exported verified database backup (checksum: ${snapshot.sha256Checksum.slice(0, 12)}...)`
+        );
+        const dateStamp = snapshot.createdAt.slice(0, 10);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="shopino-backup-${dateStamp}.json"`
+        );
+        res.json(snapshot);
+      } catch (err: any) {
+        res.status(500).json({
+          error: err?.message || 'خطا در تهیه نسخه پشتیبان پایگاه داده.',
+        });
+      }
+    }
+  );
+
+  app.post(
+    '/api/backup/restore',
+    requireRole('owner'),
+    (req: Request, res: Response) => {
+      try {
+        const rawBody = req.body;
+        if (!rawBody || typeof rawBody !== 'object') {
+          res.status(400).json({ error: 'اطلاعات فایل پشتیبان ارسال نشده است.' });
+          return;
+        }
+
+        const backupPayload =
+          rawBody.backup && typeof rawBody.backup === 'object' ? rawBody.backup : rawBody;
+
+        const result = restoreDatabaseSnapshot(backupPayload, req.user!);
+        logAudit(
+          req.user,
+          'BACKUP_RESTORE',
+          'system',
+          'database',
+          `Restored database from verified backup (safety backup: ${path.basename(result.safetyBackupPath)})`
+        );
+
+        res.json({
+          ok: true,
+          safetyBackupCreated: true,
+          safetyBackupFile: path.basename(result.safetyBackupPath),
+          restoredCounts: result.restoredCounts,
+        });
+      } catch (err: any) {
+        logAudit(
+          req.user,
+          'BACKUP_RESTORE_FAILED',
+          'system',
+          'database',
+          `Rejected backup restore: ${String(err?.message || 'Invalid backup').slice(0, 200)}`
+        );
+        res.status(400).json({
+          error: err?.message || 'بازیابی نسخه پشتیبان به دلیل خطای اعتبارسنجی متوقف شد.',
+        });
+      }
     }
   );
 

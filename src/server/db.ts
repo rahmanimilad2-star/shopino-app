@@ -1021,3 +1021,833 @@ export function purgeDemoData() {
   });
 }
 
+export const BACKUP_FORMAT_ID = 'shopino-backup';
+export const BACKUP_SCHEMA_VERSION = 1;
+
+export const REQUIRED_BACKUP_TABLES = [
+  'settings',
+  'users',
+  'customers',
+  'customer_notes',
+  'products',
+  'orders',
+  'order_items',
+  'payments',
+  'inventory_movements',
+  'notifications',
+  'audit_logs',
+] as const;
+
+export type BackupTableName = (typeof REQUIRED_BACKUP_TABLES)[number];
+
+export interface BackupTablesPayload {
+  settings: any[];
+  users: any[];
+  customers: any[];
+  customer_notes: any[];
+  products: any[];
+  orders: any[];
+  order_items: any[];
+  payments: any[];
+  inventory_movements: any[];
+  notifications: any[];
+  audit_logs: any[];
+}
+
+export interface ShopinoBackupPackage {
+  format: string;
+  schemaVersion: number;
+  createdAt: string;
+  exportedBy: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  recordCounts: Record<BackupTableName, number>;
+  sha256Checksum: string;
+  tables: BackupTablesPayload;
+}
+
+function canonicalizeValue(val: unknown): unknown {
+  if (val === null || val === undefined) return null;
+  if (Array.isArray(val)) {
+    return val.map(canonicalizeValue);
+  }
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>;
+    const sortedKeys = Object.keys(obj).sort();
+    const result: Record<string, unknown> = {};
+    for (const k of sortedKeys) {
+      result[k] = canonicalizeValue(obj[k]);
+    }
+    return result;
+  }
+  return val;
+}
+
+export function computeBackupChecksum(tables: BackupTablesPayload): string {
+  const canonicalPayload = canonicalizeValue({
+    format: BACKUP_FORMAT_ID,
+    schemaVersion: BACKUP_SCHEMA_VERSION,
+    tables,
+  });
+  const serialized = JSON.stringify(canonicalPayload);
+  return crypto.createHash('sha256').update(serialized, 'utf8').digest('hex');
+}
+
+export function createVerifiedDatabaseBackup(label = 'pre-restore'): string {
+  saveDatabase();
+  const dbFile = getDbFilePath();
+  if (!fs.existsSync(dbFile)) {
+    throw new Error('فایل پایگاه داده فعلی برای ایجاد نسخه پشتیبان ایمنی یافت نشد.');
+  }
+  const backupPath = createDatabaseBackup(label);
+  if (!backupPath || !fs.existsSync(backupPath)) {
+    throw new Error('ایجاد فایل پشتیبان ایمنی پیش از بازیابی ناموفق بود.');
+  }
+
+  const srcBuf = fs.readFileSync(dbFile);
+  const bakBuf = fs.readFileSync(backupPath);
+  if (bakBuf.length === 0 || bakBuf.length !== srcBuf.length) {
+    throw new Error('اندازه فایل پشتیبان ایمنی با پایگاه داده فعلی مطابقت ندارد.');
+  }
+
+  const sqliteMagic = 'SQLite format 3\0';
+  if (bakBuf.subarray(0, 16).toString('utf8') !== sqliteMagic) {
+    throw new Error('هدر فایل پشتیبان ایمنی SQLite معتبر نیست.');
+  }
+
+  const srcHash = crypto.createHash('sha256').update(srcBuf).digest();
+  const bakHash = crypto.createHash('sha256').update(bakBuf).digest();
+  if (!crypto.timingSafeEqual(srcHash, bakHash)) {
+    throw new Error('تأیید یکپارچگی (SHA-256) نسخه پشتیبان ایمنی پیش از بازیابی ناموفق بود.');
+  }
+
+  return backupPath;
+}
+
+export function exportDatabaseSnapshot(exportedBy: {
+  id: string;
+  name: string;
+  email: string;
+}): ShopinoBackupPackage {
+  const tables: BackupTablesPayload = {
+    settings: queryAll('SELECT key, value FROM settings ORDER BY key ASC'),
+    // Sanitize user records: never export password_hash or session tokens
+    users: queryAll(
+      'SELECT id, name, name_fa, email, role, status, last_login, created_at FROM users ORDER BY id ASC'
+    ),
+    customers: queryAll(
+      'SELECT id, code, name, phone, email, address, customer_type, tags, notes, status, is_demo, created_at, updated_at FROM customers ORDER BY id ASC'
+    ),
+    customer_notes: queryAll(
+      'SELECT id, customer_id, author_name, note, reminder_date, is_completed, is_demo, created_at FROM customer_notes ORDER BY id ASC'
+    ),
+    products: queryAll(
+      'SELECT id, sku, name, name_fa, category, description, notes, unit, cost_price_cents, sale_price_cents, wholesale_price_cents, stock_quantity, min_stock_threshold, product_type, status, is_demo, created_at, updated_at FROM products ORDER BY id ASC'
+    ),
+    orders: queryAll(
+      'SELECT id, order_number, customer_id, pricing_type, order_date, due_date, status, subtotal_cents, item_discount_cents, order_discount_cents, tax_cents, final_total_cents, cost_total_cents, notes, inventory_deducted, created_by, is_demo, created_at, updated_at FROM orders ORDER BY id ASC'
+    ),
+    order_items: queryAll(
+      'SELECT id, order_id, product_id, product_name, sku, quantity, unit_price_cents, unit_cost_cents, discount_cents, tax_rate, tax_cents, line_total_cents FROM order_items ORDER BY id ASC'
+    ),
+    payments: queryAll(
+      'SELECT id, payment_number, customer_id, order_id, payment_date, amount_cents, payment_type, payment_method, reference_number, notes, provider_confirmed, recorded_by, is_demo, created_at FROM payments ORDER BY id ASC'
+    ),
+    inventory_movements: queryAll(
+      'SELECT id, product_id, movement_type, quantity_change, previous_stock, new_stock, reference_id, reason, actor_name, is_demo, created_at FROM inventory_movements ORDER BY id ASC'
+    ),
+    notifications: queryAll(
+      'SELECT id, type, title_en, title_fa, message_en, message_fa, target_route, is_read, is_demo, created_at FROM notifications ORDER BY id ASC'
+    ),
+    audit_logs: queryAll(
+      'SELECT id, user_id, user_name, user_role, action, entity_type, entity_id, summary, created_at FROM audit_logs ORDER BY id ASC'
+    ),
+  };
+
+  const recordCounts: Record<BackupTableName, number> = {
+    settings: tables.settings.length,
+    users: tables.users.length,
+    customers: tables.customers.length,
+    customer_notes: tables.customer_notes.length,
+    products: tables.products.length,
+    orders: tables.orders.length,
+    order_items: tables.order_items.length,
+    payments: tables.payments.length,
+    inventory_movements: tables.inventory_movements.length,
+    notifications: tables.notifications.length,
+    audit_logs: tables.audit_logs.length,
+  };
+
+  const sha256Checksum = computeBackupChecksum(tables);
+
+  return {
+    format: BACKUP_FORMAT_ID,
+    schemaVersion: BACKUP_SCHEMA_VERSION,
+    createdAt: new Date().toISOString(),
+    exportedBy: {
+      id: exportedBy.id,
+      name: exportedBy.name,
+      email: exportedBy.email,
+    },
+    recordCounts,
+    sha256Checksum,
+    tables,
+  };
+}
+
+function isNonEmptyString(val: unknown, maxLen = 2000): val is string {
+  return typeof val === 'string' && val.trim().length > 0 && val.length <= maxLen;
+}
+
+function isNonNegativeSafeInt(val: unknown): val is number {
+  return typeof val === 'number' && Number.isSafeInteger(val) && val >= 0;
+}
+
+function isSafeInt(val: unknown): val is number {
+  return typeof val === 'number' && Number.isSafeInteger(val);
+}
+
+export function validateBackupPackage(raw: unknown): ShopinoBackupPackage {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('ساختار فایل پشتیبان نامعتبر است.');
+  }
+
+  const pkg = raw as Record<string, any>;
+  if (pkg.format !== BACKUP_FORMAT_ID) {
+    throw new Error('فرمت فایل پشتیبان متعلق به سامانه شاپینو نیست.');
+  }
+  if (pkg.schemaVersion !== BACKUP_SCHEMA_VERSION) {
+    throw new Error(`نسخه ساختار فایل پشتیبان (${String(pkg.schemaVersion)}) پشتیبانی نمی‌شود.`);
+  }
+
+  if (!pkg.tables || typeof pkg.tables !== 'object' || Array.isArray(pkg.tables)) {
+    throw new Error('بخش جداول اطلاعات (tables) در فایل پشتیبان یافت نشد.');
+  }
+
+  // Reject unexpected table keys
+  const providedKeys = Object.keys(pkg.tables);
+  for (const k of providedKeys) {
+    if (!REQUIRED_BACKUP_TABLES.includes(k as BackupTableName)) {
+      throw new Error(`جدول ناشناخته «${k}» در فایل پشتیبان وجود دارد.`);
+    }
+  }
+
+  for (const reqTable of REQUIRED_BACKUP_TABLES) {
+    if (!Array.isArray(pkg.tables[reqTable])) {
+      throw new Error(`جدول الزامی «${reqTable}» در فایل پشتیبان وجود ندارد یا آرایه نیست.`);
+    }
+  }
+
+  if (pkg.recordCounts !== undefined) {
+    if (!pkg.recordCounts || typeof pkg.recordCounts !== 'object' || Array.isArray(pkg.recordCounts)) {
+      throw new Error('ساختار شمارش رکوردها (recordCounts) در فایل پشتیبان نامعتبر است.');
+    }
+    for (const reqTable of REQUIRED_BACKUP_TABLES) {
+      if (
+        pkg.recordCounts[reqTable] !== undefined &&
+        pkg.recordCounts[reqTable] !== pkg.tables[reqTable].length
+      ) {
+        throw new Error(`تعداد رکوردهای جدول «${reqTable}» با متادیتای فایل پشتیبان مطابقت ندارد.`);
+      }
+    }
+  }
+
+  if (typeof pkg.sha256Checksum !== 'string' || !/^[a-f0-9]{64}$/i.test(pkg.sha256Checksum)) {
+    throw new Error('کد کنترلی یکپارچگی (sha256Checksum) در فایل پشتیبان وجود ندارد یا نامعتبر است.');
+  }
+
+  const tables = pkg.tables as BackupTablesPayload;
+  const expectedChecksum = computeBackupChecksum(tables);
+  const actualBuf = Buffer.from(pkg.sha256Checksum.toLowerCase(), 'utf8');
+  const expectedBuf = Buffer.from(expectedChecksum.toLowerCase(), 'utf8');
+  if (actualBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(actualBuf, expectedBuf)) {
+    throw new Error('عدم تطابق امضای دیجیتال (SHA-256 Checksum): فایل پشتیبان دستکاری یا خراب شده است.');
+  }
+
+  // Validate rows & referential integrity before touching the database
+  const validRoles = new Set(['owner', 'manager', 'sales', 'accountant', 'inventory']);
+  const validUserStatuses = new Set(['active', 'suspended']);
+  const validRecordStatuses = new Set(['active', 'archived']);
+  const validCustomerTypes = new Set(['retail', 'wholesale']);
+  const validOrderStatuses = new Set(['registered', 'preparing', 'completed', 'cancelled']);
+  const validPaymentTypes = new Set(['collection', 'advance', 'refund']);
+  const validPaymentMethods = new Set(['cash', 'card', 'transfer', 'bank_transfer', 'online', 'cheque']);
+
+  for (const s of tables.settings) {
+    if (!s || typeof s !== 'object' || !isNonEmptyString(s.key, 120) || typeof s.value !== 'string') {
+      throw new Error('رکورد نامعتبر در جدول تنظیمات (settings) یافت شد.');
+    }
+  }
+
+  if (tables.users.length === 0) {
+    throw new Error('فایل پشتیبان باید حداقل شامل یک حساب کاربری باشد.');
+  }
+  const userIds = new Set<string>();
+  const userEmails = new Set<string>();
+  for (const u of tables.users) {
+    if (
+      !u ||
+      typeof u !== 'object' ||
+      !isNonEmptyString(u.id, 100) ||
+      !isNonEmptyString(u.name, 160) ||
+      !isNonEmptyString(u.name_fa, 160) ||
+      !isNonEmptyString(u.email, 180) ||
+      !validRoles.has(u.role) ||
+      !validUserStatuses.has(u.status || 'active') ||
+      !isNonEmptyString(u.created_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در جدول کاربران (users) یافت شد.');
+    }
+    if (u.password_hash !== undefined) {
+      throw new Error('فایل پشتیبان نباید حاوی هش رمز عبور خام (password_hash) باشد.');
+    }
+    const normEmail = u.email.trim().toLowerCase();
+    if (userIds.has(u.id) || userEmails.has(normEmail)) {
+      throw new Error('شناسه یا ایمیل تکراری در جدول کاربران فایل پشتیبان وجود دارد.');
+    }
+    userIds.add(u.id);
+    userEmails.add(normEmail);
+  }
+
+  const customerIds = new Set<string>();
+  const customerCodes = new Set<string>();
+  for (const c of tables.customers) {
+    if (
+      !c ||
+      typeof c !== 'object' ||
+      !isNonEmptyString(c.id, 100) ||
+      !isNonEmptyString(c.code, 60) ||
+      !isNonEmptyString(c.name, 180) ||
+      !validCustomerTypes.has(c.customer_type || 'retail') ||
+      !validRecordStatuses.has(c.status || 'active') ||
+      !isNonEmptyString(c.created_at, 60) ||
+      !isNonEmptyString(c.updated_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در جدول مشتریان (customers) یافت شد.');
+    }
+    if (customerIds.has(c.id) || customerCodes.has(c.code)) {
+      throw new Error('شناسه یا کد تکراری در جدول مشتریان فایل پشتیبان وجود دارد.');
+    }
+    customerIds.add(c.id);
+    customerCodes.add(c.code);
+  }
+
+  for (const cn of tables.customer_notes) {
+    if (
+      !cn ||
+      typeof cn !== 'object' ||
+      !isNonEmptyString(cn.id, 100) ||
+      !isNonEmptyString(cn.customer_id, 100) ||
+      !customerIds.has(cn.customer_id) ||
+      !isNonEmptyString(cn.author_name, 160) ||
+      !isNonEmptyString(cn.note, 2000) ||
+      !isNonEmptyString(cn.created_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر یا فاقد مشتری مرتبط در جدول یادداشت‌های مشتری (customer_notes) یافت شد.');
+    }
+  }
+
+  const productIds = new Set<string>();
+  const productSkus = new Set<string>();
+  for (const p of tables.products) {
+    if (
+      !p ||
+      typeof p !== 'object' ||
+      !isNonEmptyString(p.id, 100) ||
+      !isNonEmptyString(p.sku, 80) ||
+      !isNonEmptyString(p.name, 180) ||
+      !isNonNegativeSafeInt(p.cost_price_cents) ||
+      !isNonNegativeSafeInt(p.sale_price_cents) ||
+      !isNonNegativeSafeInt(p.wholesale_price_cents) ||
+      !isNonNegativeSafeInt(p.stock_quantity) ||
+      !isNonNegativeSafeInt(p.min_stock_threshold) ||
+      !validRecordStatuses.has(p.status || 'active') ||
+      !isNonEmptyString(p.created_at, 60) ||
+      !isNonEmptyString(p.updated_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در جدول کالاها (products) یافت شد.');
+    }
+    const upperSku = p.sku.trim().toUpperCase();
+    if (productIds.has(p.id) || productSkus.has(upperSku)) {
+      throw new Error('شناسه یا کد کالای (SKU) تکراری در جدول کالاها وجود دارد.');
+    }
+    productIds.add(p.id);
+    productSkus.add(upperSku);
+  }
+
+  const orderIds = new Set<string>();
+  const orderNumbers = new Set<string>();
+  for (const o of tables.orders) {
+    if (
+      !o ||
+      typeof o !== 'object' ||
+      !isNonEmptyString(o.id, 100) ||
+      !isNonEmptyString(o.order_number, 80) ||
+      (o.customer_id !== null && o.customer_id !== undefined && !customerIds.has(String(o.customer_id))) ||
+      !validCustomerTypes.has(o.pricing_type || 'retail') ||
+      !isNonEmptyString(o.order_date, 40) ||
+      !validOrderStatuses.has(o.status) ||
+      !isNonNegativeSafeInt(o.subtotal_cents) ||
+      !isNonNegativeSafeInt(o.item_discount_cents) ||
+      !isNonNegativeSafeInt(o.order_discount_cents) ||
+      !isNonNegativeSafeInt(o.tax_cents) ||
+      !isNonNegativeSafeInt(o.final_total_cents) ||
+      !isNonNegativeSafeInt(o.cost_total_cents) ||
+      !isNonEmptyString(o.created_by, 160) ||
+      !isNonEmptyString(o.created_at, 60) ||
+      !isNonEmptyString(o.updated_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در جدول سفارش‌ها (orders) یافت شد.');
+    }
+    if (orderIds.has(o.id) || orderNumbers.has(o.order_number)) {
+      throw new Error('شناسه یا شماره فاکتور تکراری در جدول سفارش‌ها وجود دارد.');
+    }
+    orderIds.add(o.id);
+    orderNumbers.add(o.order_number);
+  }
+
+  const orderItemIds = new Set<string>();
+  for (const oi of tables.order_items) {
+    if (
+      !oi ||
+      typeof oi !== 'object' ||
+      !isNonEmptyString(oi.id, 100) ||
+      !isNonEmptyString(oi.order_id, 100) ||
+      !orderIds.has(oi.order_id) ||
+      !isNonEmptyString(oi.product_id, 100) ||
+      !productIds.has(oi.product_id) ||
+      !isNonEmptyString(oi.product_name, 180) ||
+      !isNonEmptyString(oi.sku, 80) ||
+      !isSafeInt(oi.quantity) ||
+      oi.quantity < 1 ||
+      !isNonNegativeSafeInt(oi.unit_price_cents) ||
+      !isNonNegativeSafeInt(oi.unit_cost_cents) ||
+      !isNonNegativeSafeInt(oi.discount_cents) ||
+      !isNonNegativeSafeInt(oi.line_total_cents)
+    ) {
+      throw new Error('رکورد نامعتبر در اقلام سفارش (order_items) یافت شد.');
+    }
+    if (orderItemIds.has(oi.id)) {
+      throw new Error('شناسه تکراری در اقلام سفارش (order_items) وجود دارد.');
+    }
+    orderItemIds.add(oi.id);
+  }
+
+  const paymentIds = new Set<string>();
+  const paymentNumbers = new Set<string>();
+  for (const pay of tables.payments) {
+    if (
+      !pay ||
+      typeof pay !== 'object' ||
+      !isNonEmptyString(pay.id, 100) ||
+      !isNonEmptyString(pay.payment_number, 80) ||
+      (pay.customer_id !== null && pay.customer_id !== undefined && !customerIds.has(String(pay.customer_id))) ||
+      (pay.order_id !== null && pay.order_id !== undefined && !orderIds.has(String(pay.order_id))) ||
+      !isNonEmptyString(pay.payment_date, 40) ||
+      !isSafeInt(pay.amount_cents) ||
+      pay.amount_cents <= 0 ||
+      !validPaymentTypes.has(pay.payment_type || 'collection') ||
+      !validPaymentMethods.has(pay.payment_method || 'card') ||
+      !isNonEmptyString(pay.recorded_by, 160) ||
+      !isNonEmptyString(pay.created_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در جدول پرداخت‌ها (payments) یافت شد.');
+    }
+    if (paymentIds.has(pay.id) || paymentNumbers.has(pay.payment_number)) {
+      throw new Error('شناسه یا شماره رسید تکراری در جدول پرداخت‌ها وجود دارد.');
+    }
+    paymentIds.add(pay.id);
+    paymentNumbers.add(pay.payment_number);
+  }
+
+  const movementIds = new Set<string>();
+  for (const m of tables.inventory_movements) {
+    if (
+      !m ||
+      typeof m !== 'object' ||
+      !isNonEmptyString(m.id, 100) ||
+      !isNonEmptyString(m.product_id, 100) ||
+      !productIds.has(m.product_id) ||
+      !isNonEmptyString(m.movement_type, 50) ||
+      !isSafeInt(m.quantity_change) ||
+      m.quantity_change === 0 ||
+      !isNonNegativeSafeInt(m.previous_stock) ||
+      !isNonNegativeSafeInt(m.new_stock) ||
+      !isNonEmptyString(m.reason, 500) ||
+      !isNonEmptyString(m.actor_name, 160) ||
+      !isNonEmptyString(m.created_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در تاریخچه انبار (inventory_movements) یافت شد.');
+    }
+    if (movementIds.has(m.id)) {
+      throw new Error('شناسه تکراری در تاریخچه انبار (inventory_movements) وجود دارد.');
+    }
+    movementIds.add(m.id);
+  }
+
+  const notifIds = new Set<string>();
+  for (const n of tables.notifications) {
+    if (
+      !n ||
+      typeof n !== 'object' ||
+      !isNonEmptyString(n.id, 100) ||
+      !isNonEmptyString(n.type, 60) ||
+      !isNonEmptyString(n.title_en, 300) ||
+      !isNonEmptyString(n.title_fa, 300) ||
+      !isNonEmptyString(n.message_en, 1000) ||
+      !isNonEmptyString(n.message_fa, 1000) ||
+      !isNonEmptyString(n.created_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در جدول اعلان‌ها (notifications) یافت شد.');
+    }
+    if (notifIds.has(n.id)) {
+      throw new Error('شناسه تکراری در جدول اعلان‌ها وجود دارد.');
+    }
+    notifIds.add(n.id);
+  }
+
+  const auditIds = new Set<string>();
+  for (const a of tables.audit_logs) {
+    if (
+      !a ||
+      typeof a !== 'object' ||
+      !isNonEmptyString(a.id, 100) ||
+      !isNonEmptyString(a.user_id, 100) ||
+      !isNonEmptyString(a.user_name, 160) ||
+      !isNonEmptyString(a.user_role, 50) ||
+      !isNonEmptyString(a.action, 80) ||
+      !isNonEmptyString(a.entity_type, 80) ||
+      !isNonEmptyString(a.entity_id, 120) ||
+      !isNonEmptyString(a.summary, 1000) ||
+      !isNonEmptyString(a.created_at, 60)
+    ) {
+      throw new Error('رکورد نامعتبر در جدول گزارش امنیت (audit_logs) یافت شد.');
+    }
+    if (auditIds.has(a.id)) {
+      throw new Error('شناسه تکراری در جدول گزارش امنیت وجود دارد.');
+    }
+    auditIds.add(a.id);
+  }
+
+  return pkg as ShopinoBackupPackage;
+}
+
+export function restoreDatabaseSnapshot(
+  rawPayload: unknown,
+  actingOwner: { id: string; name: string; name_fa: string; email: string; role: string }
+): { safetyBackupPath: string; restoredCounts: Record<BackupTableName, number> } {
+  // 1. Validate structure, schema, referential integrity, and SHA-256 checksum BEFORE touching DB
+  const validated = validateBackupPackage(rawPayload);
+  const { tables } = validated;
+
+  // 2. Create and verify a pre-restore safety backup of the current database on disk
+  const safetyBackupPath = createVerifiedDatabaseBackup('pre-restore');
+
+  // 3. Execute atomic restoration inside a single SQLite transaction
+  runTransaction(() => {
+    const existingUsers = queryAll<{
+      id: string;
+      name: string;
+      name_fa: string;
+      email: string;
+      password_hash: string;
+      role: string;
+      status: string;
+      last_login: string | null;
+      created_at: string;
+    }>('SELECT * FROM users');
+
+    const hashById = new Map<string, string>();
+    const hashByEmail = new Map<string, string>();
+    let currentOwnerRecord = existingUsers.find((u) => u.id === actingOwner.id);
+
+    for (const u of existingUsers) {
+      hashById.set(u.id, u.password_hash);
+      hashByEmail.set(u.email.trim().toLowerCase(), u.password_hash);
+    }
+
+    // Clear business tables in dependency order
+    executeSql('DELETE FROM order_items');
+    executeSql('DELETE FROM payments');
+    executeSql('DELETE FROM orders');
+    executeSql('DELETE FROM inventory_movements');
+    executeSql('DELETE FROM customer_notes');
+    executeSql('DELETE FROM customers');
+    executeSql('DELETE FROM products');
+    executeSql('DELETE FROM notifications');
+    executeSql('DELETE FROM settings');
+    executeSql('DELETE FROM audit_logs');
+    executeSql('DELETE FROM users');
+
+    // Restore users while preserving existing password_hash values and guaranteeing the acting owner remains active
+    const fallbackPasswordHash = hashPassword(crypto.randomBytes(24).toString('hex'));
+    let ownerRestored = false;
+
+    for (const u of tables.users) {
+      const normEmail = u.email.trim().toLowerCase();
+      const preservedHash =
+        hashById.get(u.id) || hashByEmail.get(normEmail) || fallbackPasswordHash;
+      const isActingOwner = u.id === actingOwner.id || normEmail === actingOwner.email.trim().toLowerCase();
+      const effectiveRole = isActingOwner ? 'owner' : u.role;
+      const effectiveStatus = isActingOwner ? 'active' : u.status || 'active';
+      if (effectiveRole === 'owner' && effectiveStatus === 'active') {
+        ownerRestored = true;
+      }
+
+      executeSql(
+        `INSERT INTO users (id, name, name_fa, email, password_hash, role, status, last_login, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          u.id,
+          u.name,
+          u.name_fa,
+          normEmail,
+          preservedHash,
+          effectiveRole,
+          effectiveStatus,
+          u.last_login ?? null,
+          u.created_at,
+        ]
+      );
+    }
+
+    // Ensure the currently authenticated owner account is never locked out after restore
+    if (!ownerRestored && currentOwnerRecord) {
+      executeSql(
+        `INSERT OR REPLACE INTO users (id, name, name_fa, email, password_hash, role, status, last_login, created_at)
+         VALUES (?, ?, ?, ?, ?, 'owner', 'active', ?, ?)`,
+        [
+          currentOwnerRecord.id,
+          currentOwnerRecord.name,
+          currentOwnerRecord.name_fa,
+          currentOwnerRecord.email,
+          currentOwnerRecord.password_hash,
+          currentOwnerRecord.last_login,
+          currentOwnerRecord.created_at,
+        ]
+      );
+    }
+
+    // Prune any sessions belonging to users that no longer exist
+    executeSql('DELETE FROM sessions WHERE user_id NOT IN (SELECT id FROM users)');
+
+    for (const s of tables.settings) {
+      executeSql('INSERT INTO settings (key, value) VALUES (?, ?)', [s.key, s.value]);
+    }
+
+    for (const c of tables.customers) {
+      executeSql(
+        `INSERT INTO customers (id, code, name, phone, email, address, customer_type, tags, notes, status, is_demo, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          c.id,
+          c.code,
+          c.name,
+          c.phone ?? '',
+          c.email ?? '',
+          c.address ?? '',
+          c.customer_type || 'retail',
+          c.tags ?? '[]',
+          c.notes ?? '',
+          c.status || 'active',
+          c.is_demo ? 1 : 0,
+          c.created_at,
+          c.updated_at,
+        ]
+      );
+    }
+
+    for (const cn of tables.customer_notes) {
+      executeSql(
+        `INSERT INTO customer_notes (id, customer_id, author_name, note, reminder_date, is_completed, is_demo, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          cn.id,
+          cn.customer_id,
+          cn.author_name,
+          cn.note,
+          cn.reminder_date ?? null,
+          cn.is_completed ? 1 : 0,
+          cn.is_demo ? 1 : 0,
+          cn.created_at,
+        ]
+      );
+    }
+
+    for (const p of tables.products) {
+      executeSql(
+        `INSERT INTO products (id, sku, name, name_fa, category, description, notes, unit, cost_price_cents, sale_price_cents, wholesale_price_cents, stock_quantity, min_stock_threshold, product_type, status, is_demo, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          p.id,
+          p.sku.trim().toUpperCase(),
+          p.name,
+          p.name_fa || p.name,
+          p.category || 'عمومی',
+          p.description ?? '',
+          p.notes ?? '',
+          p.unit || 'piece',
+          p.cost_price_cents,
+          p.sale_price_cents,
+          p.wholesale_price_cents,
+          p.stock_quantity,
+          p.min_stock_threshold,
+          p.product_type || 'physical',
+          p.status || 'active',
+          p.is_demo ? 1 : 0,
+          p.created_at,
+          p.updated_at,
+        ]
+      );
+    }
+
+    for (const o of tables.orders) {
+      executeSql(
+        `INSERT INTO orders (id, order_number, customer_id, pricing_type, order_date, due_date, status, subtotal_cents, item_discount_cents, order_discount_cents, tax_cents, final_total_cents, cost_total_cents, notes, inventory_deducted, created_by, is_demo, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          o.id,
+          o.order_number,
+          o.customer_id ?? null,
+          o.pricing_type || 'retail',
+          o.order_date,
+          o.due_date ?? o.order_date,
+          o.status,
+          o.subtotal_cents,
+          o.item_discount_cents,
+          o.order_discount_cents,
+          o.tax_cents,
+          o.final_total_cents,
+          o.cost_total_cents,
+          o.notes ?? '',
+          o.inventory_deducted ? 1 : 0,
+          o.created_by,
+          o.is_demo ? 1 : 0,
+          o.created_at,
+          o.updated_at,
+        ]
+      );
+    }
+
+    for (const oi of tables.order_items) {
+      executeSql(
+        `INSERT INTO order_items (id, order_id, product_id, product_name, sku, quantity, unit_price_cents, unit_cost_cents, discount_cents, tax_rate, tax_cents, line_total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          oi.id,
+          oi.order_id,
+          oi.product_id,
+          oi.product_name,
+          oi.sku,
+          oi.quantity,
+          oi.unit_price_cents,
+          oi.unit_cost_cents,
+          oi.discount_cents,
+          Number(oi.tax_rate || 0),
+          oi.tax_cents ?? 0,
+          oi.line_total_cents,
+        ]
+      );
+    }
+
+    for (const pay of tables.payments) {
+      executeSql(
+        `INSERT INTO payments (id, payment_number, customer_id, order_id, payment_date, amount_cents, payment_type, payment_method, reference_number, notes, provider_confirmed, recorded_by, is_demo, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          pay.id,
+          pay.payment_number,
+          pay.customer_id ?? null,
+          pay.order_id ?? null,
+          pay.payment_date,
+          pay.amount_cents,
+          pay.payment_type || 'collection',
+          pay.payment_method || 'card',
+          pay.reference_number ?? '',
+          pay.notes ?? '',
+          pay.provider_confirmed !== undefined ? (pay.provider_confirmed ? 1 : 0) : 1,
+          pay.recorded_by,
+          pay.is_demo ? 1 : 0,
+          pay.created_at,
+        ]
+      );
+    }
+
+    for (const m of tables.inventory_movements) {
+      executeSql(
+        `INSERT INTO inventory_movements (id, product_id, movement_type, quantity_change, previous_stock, new_stock, reference_id, reason, actor_name, is_demo, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          m.id,
+          m.product_id,
+          m.movement_type,
+          m.quantity_change,
+          m.previous_stock,
+          m.new_stock,
+          m.reference_id ?? '',
+          m.reason,
+          m.actor_name,
+          m.is_demo ? 1 : 0,
+          m.created_at,
+        ]
+      );
+    }
+
+    for (const n of tables.notifications) {
+      executeSql(
+        `INSERT INTO notifications (id, type, title_en, title_fa, message_en, message_fa, target_route, is_read, is_demo, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          n.id,
+          n.type,
+          n.title_en,
+          n.title_fa,
+          n.message_en,
+          n.message_fa,
+          n.target_route ?? '/dashboard',
+          n.is_read ? 1 : 0,
+          n.is_demo ? 1 : 0,
+          n.created_at,
+        ]
+      );
+    }
+
+    for (const a of tables.audit_logs) {
+      executeSql(
+        `INSERT INTO audit_logs (id, user_id, user_name, user_role, action, entity_type, entity_id, summary, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          a.id,
+          a.user_id,
+          a.user_name,
+          a.user_role,
+          a.action,
+          a.entity_type,
+          a.entity_id,
+          a.summary,
+          a.created_at,
+        ]
+      );
+    }
+  });
+
+  const restoredCounts: Record<BackupTableName, number> = {
+    settings: tables.settings.length,
+    users: tables.users.length,
+    customers: tables.customers.length,
+    customer_notes: tables.customer_notes.length,
+    products: tables.products.length,
+    orders: tables.orders.length,
+    order_items: tables.order_items.length,
+    payments: tables.payments.length,
+    inventory_movements: tables.inventory_movements.length,
+    notifications: tables.notifications.length,
+    audit_logs: tables.audit_logs.length,
+  };
+
+  return { safetyBackupPath, restoredCounts };
+}
+
+
