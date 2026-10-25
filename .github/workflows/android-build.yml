@@ -28,6 +28,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Verify Gradle Wrapper integrity
         working-directory: android
@@ -42,8 +47,6 @@ jobs:
 
       - name: Setup Gradle caching
         uses: gradle/actions/setup-gradle@v4
-        with:
-          build-root-directory: android
 
       - name: Run unit tests
         working-directory: android
