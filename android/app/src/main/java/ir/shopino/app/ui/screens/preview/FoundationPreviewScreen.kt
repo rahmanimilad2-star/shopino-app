@@ -922,7 +922,7 @@ fun PreviewFoundationPersianDark() {
             currentBaseUrl = "http://10.0.2.2:3000/",
             onToggleLanguage = {},
             onToggleTheme = {},
-            onUpdateBaseUrl = {},
+            onUpdateBaseUrl = { null },
             onNavigateToLiveLogin = {}
         )
     }
@@ -941,7 +941,7 @@ fun PreviewFoundationEnglishLight() {
             currentBaseUrl = "http://10.0.2.2:3000/",
             onToggleLanguage = {},
             onToggleTheme = {},
-            onUpdateBaseUrl = {},
+            onUpdateBaseUrl = { null },
             onNavigateToLiveLogin = {}
         )
     }
