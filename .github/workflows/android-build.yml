@@ -35,15 +35,13 @@ jobs:
             android/gradle/wrapper/gradle-wrapper.properties
 
 
-      - name: Install Android SDK packages and accept licenses
-        shell: bash
-        run: |
-          set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Verify Gradle Wrapper integrity
         shell: bash
