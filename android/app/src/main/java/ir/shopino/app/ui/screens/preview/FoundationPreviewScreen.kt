@@ -187,7 +187,7 @@ fun FoundationPreviewScreen(
     currentBaseUrl: String,
     onToggleLanguage: () -> Unit,
     onToggleTheme: () -> Unit,
-    onUpdateBaseUrl: (String) -> Unit,
+    onUpdateBaseUrl: (String) -> ir.shopino.app.data.auth.ServerUrl.Reason?,
     onNavigateToLiveLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -260,8 +260,7 @@ fun FoundationPreviewScreen(
                         },
                         onUpdateBaseUrl = onUpdateBaseUrl,
                         onToggleLanguage = onToggleLanguage,
-                        onToggleTheme = onToggleTheme,
-                        onBackToPreview = { showEmbeddedLoginPreview = false }
+                        onToggleTheme = onToggleTheme
                     )
                 } else {
                     LazyColumn(

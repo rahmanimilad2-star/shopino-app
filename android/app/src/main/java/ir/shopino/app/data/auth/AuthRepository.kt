@@ -9,6 +9,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.MediaType.Companion.toMediaType
+import java.util.concurrent.TimeUnit
 import retrofit2.Response
 import retrofit2.Retrofit
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -20,9 +21,11 @@ class AuthFailure(
 
 class AuthRepository(
     context: Context,
-    baseUrl: String
+    baseUrl: String,
+    private val tokenStore: SecureTokenStore = SecureTokenStore(context)
 ) {
-    private val tokenStore = SecureTokenStore(context)
+    /** Normalized origin this repository talks to; session tokens are bound to it. */
+    private val origin: String = baseUrl.trim().let { if (it.endsWith("/")) it else "$it/" }
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -33,13 +36,10 @@ class AuthRepository(
     private val api: AuthApi
 
     init {
-        val normalizedUrl = baseUrl.trim().let {
-            if (it.endsWith("/")) it else "$it/"
-        }
-
         val authInterceptor = Interceptor { chain ->
             val original = chain.request()
-            val token = tokenStore.read()
+            val isLogin = original.url.encodedPath.endsWith("api/auth/login")
+            val token = if (isLogin) null else tokenStore.read(origin)
             val request = original.newBuilder().apply {
                 if (!token.isNullOrBlank()) {
                     header("Authorization", "Bearer $token")
@@ -49,11 +49,14 @@ class AuthRepository(
         }
 
         val client = OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
             .build()
 
         api = Retrofit.Builder()
-            .baseUrl(normalizedUrl)
+            .baseUrl(origin)
             .client(client)
             .addConverterFactory(
                 json.asConverterFactory("application/json".toMediaType())
@@ -74,15 +77,16 @@ class AuthRepository(
             if (body.token.isBlank()) {
                 throw AuthFailure("The server returned an empty session token.")
             }
-            tokenStore.save(body.token)
+            tokenStore.save(body.token, origin)
             body.user
         }
 
     suspend fun restoreSession(): AuthUser? = withContext(Dispatchers.IO) {
-        if (tokenStore.read().isNullOrBlank()) return@withContext null
+        if (tokenStore.read(origin).isNullOrBlank()) return@withContext null
 
         val response = api.me()
-        if (response.code() == 401) {
+        if (response.code() == 401 || response.code() == 403) {
+            // Token rejected by the server (expired/revoked): drop it and return to login.
             tokenStore.clear()
             return@withContext null
         }
@@ -93,7 +97,7 @@ class AuthRepository(
 
     suspend fun logout() = withContext(Dispatchers.IO) {
         try {
-            if (!tokenStore.read().isNullOrBlank()) {
+            if (!tokenStore.read(origin).isNullOrBlank()) {
                 api.logout()
             }
         } finally {
@@ -118,9 +122,6 @@ class AuthRepository(
                 else -> "Request failed (HTTP ${code()})."
             }
 
-        if (code() == 401 && operation == "login") {
-            throw AuthFailure(message, code())
-        }
         throw AuthFailure(message, code())
     }
 

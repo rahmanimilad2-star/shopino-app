@@ -1,9 +1,59 @@
+import java.net.URI
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// ---- API origin configuration (single source of truth: android/gradle.properties) ----
+val retiredApiHosts = listOf("ais-pre-ak3ludbj3fwi2bggcjwafc-225659912425.europe-west3.run.app")
+val developmentOnlyHosts = listOf("localhost", "127.0.0.1", "10.0.2.2", "0.0.0.0", "::1")
+
+fun parseOrigin(name: String, raw: String): URI {
+    val uri = try { URI(raw.trim()) } catch (e: Exception) {
+        throw GradleException("$name is not a valid URL: '$raw'")
+    }
+    if (uri.scheme !in listOf("http", "https") || uri.host.isNullOrBlank()) {
+        throw GradleException("$name must be an absolute http(s) URL with a host: '$raw'")
+    }
+    if (uri.userInfo != null || uri.query != null || uri.fragment != null) {
+        throw GradleException("$name must not contain credentials, query or fragment: '$raw'")
+    }
+    return uri
+}
+
+fun normalizedOrigin(uri: URI): String {
+    val port = if (uri.port != -1) ":${uri.port}" else ""
+    val path = (uri.path ?: "").trimEnd('/') + "/"
+    return "${uri.scheme.lowercase()}://${uri.host.lowercase()}$port$path"
+}
+
+fun validatedReleaseOrigin(name: String, raw: String): String {
+    val uri = parseOrigin(name, raw)
+    val host = uri.host.lowercase()
+    if (uri.scheme != "https") throw GradleException("$name must use https for release builds: '$raw'")
+    if (host in developmentOnlyHosts) throw GradleException("$name must not point at a local/development host: '$raw'")
+    if (host in retiredApiHosts) throw GradleException("$name points at a retired host ($host)")
+    return normalizedOrigin(uri)
+}
+
+val productionApiOrigin: String = validatedReleaseOrigin(
+    "shopino.apiOrigin",
+    (findProperty("shopino.apiOrigin") as String?)
+        ?: throw GradleException("shopino.apiOrigin is missing from android/gradle.properties")
+)
+// Debug builds may be redirected to a dev server; otherwise they use the production origin.
+val debugApiOrigin: String = (findProperty("shopino.devApiOrigin") as String?)
+    ?.takeIf { it.isNotBlank() }
+    ?.let { normalizedOrigin(parseOrigin("shopino.devApiOrigin", it)) }
+    ?.also { origin ->
+        if (URI(origin).host.lowercase() in retiredApiHosts) {
+            throw GradleException("shopino.devApiOrigin points at a retired host")
+        }
+    }
+    ?: productionApiOrigin
 
 android {
     namespace = "ir.shopino.app"
@@ -20,12 +70,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        val rawServerUrl = System.getenv("SHOPINO_SERVER_URL")
-            ?: "https://ais-pre-ak3ludbj3fwi2bggcjwafc-225659912425.europe-west3.run.app/"
-        val normalizedBaseUrl = if (rawServerUrl.endsWith("/")) rawServerUrl else "$rawServerUrl/"
-        buildConfigField("String", "DEFAULT_BASE_URL", "\"$normalizedBaseUrl\"")
-        buildConfigField("String", "DEFAULT_SERVER_URL", "\"$normalizedBaseUrl\"")
     }
 
     signingConfigs {
@@ -43,8 +87,10 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
+            buildConfigField("String", "DEFAULT_BASE_URL", "\"$debugApiOrigin\"")
         }
         release {
+            buildConfigField("String", "DEFAULT_BASE_URL", "\"$productionApiOrigin\"")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

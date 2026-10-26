@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,6 +53,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import ir.shopino.app.data.auth.ServerUrl
 import ir.shopino.app.i18n.ShopinoStrings
 import ir.shopino.app.ui.components.BadgeTone
 import ir.shopino.app.ui.components.ShopinoButton
@@ -57,6 +62,20 @@ import ir.shopino.app.ui.components.ShopinoSurfaceCard
 import ir.shopino.app.ui.components.ShopinoTextField
 import ir.shopino.app.ui.theme.ShopinoTheme
 import ir.shopino.app.util.AppLanguage
+
+/** ~1 cm of visible separation between the status bar and the utility row. */
+private val UtilityBarTopGap = 38.dp
+
+private fun ServerUrl.Reason.messageKey(): String = when (this) {
+    ServerUrl.Reason.EMPTY -> "err_url_empty"
+    ServerUrl.Reason.MALFORMED, ServerUrl.Reason.MISSING_HOST -> "err_url_malformed"
+    ServerUrl.Reason.UNSUPPORTED_SCHEME -> "err_url_scheme"
+    ServerUrl.Reason.CREDENTIALS_NOT_ALLOWED -> "err_url_credentials"
+    ServerUrl.Reason.QUERY_NOT_ALLOWED -> "err_url_query"
+    ServerUrl.Reason.CLEARTEXT_NOT_ALLOWED -> "err_url_cleartext"
+    ServerUrl.Reason.LOCAL_HOST_NOT_ALLOWED -> "err_url_local"
+    ServerUrl.Reason.RETIRED_HOST -> "err_url_retired"
+}
 
 /**
  * Polished Shopino Login Screen supporting Persian RTL & English LTR layouts,
@@ -68,20 +87,23 @@ fun LoginScreen(
     errorMessage: String?,
     currentBaseUrl: String,
     onLoginSubmit: (email: String, password: String) -> Unit,
-    onUpdateBaseUrl: (String) -> Unit,
+    /** Returns null when the URL was validated and applied, otherwise the validation failure. */
+    onUpdateBaseUrl: (String) -> ServerUrl.Reason?,
     onToggleLanguage: () -> Unit,
     onToggleTheme: () -> Unit,
-    onBackToPreview: (() -> Unit)? = null,
+    isBaseUrlOverridden: Boolean = false,
+    onResetBaseUrl: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = ShopinoTheme.colors
     val language = ShopinoTheme.language
 
-    var email by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf(false) }
     var serverUrlDraft by remember(currentBaseUrl) { mutableStateOf(currentBaseUrl) }
+    var serverUrlError by remember { mutableStateOf<ServerUrl.Reason?>(null) }
 
     Box(
         modifier = modifier
@@ -99,14 +121,18 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                // Applied exactly once: status bar + navigation bar + cutout + keyboard (max per side).
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 22.dp, vertical = 28.dp),
+                .padding(start = 22.dp, end = 22.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-            // Top Utility Bar (Language, Theme, Server Config)
+            // Top Utility Bar (Language, Theme, Server Config): below the status bar, ~1 cm (38dp) gap.
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = UtilityBarTopGap),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -147,6 +173,7 @@ fun LoginScreen(
                 IconButton(
                     onClick = {
                         serverUrlDraft = currentBaseUrl
+                        serverUrlError = null
                         showServerDialog = true
                     },
                     modifier = Modifier
@@ -285,17 +312,6 @@ fun LoginScreen(
                     enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                if (onBackToPreview != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    ShopinoButton(
-                        text = ShopinoStrings.t("view_foundation_preview", language),
-                        onClick = onBackToPreview,
-                        outlined = true,
-                        accentColor = colors.accentViolet,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -335,19 +351,62 @@ fun LoginScreen(
             },
             text = {
                 Column {
+                    Text(
+                        text = "${ShopinoStrings.t("server_active", language)}: $currentBaseUrl",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.textSecondary
+                    )
+                    Text(
+                        text = ShopinoStrings.t(
+                            if (isBaseUrlOverridden) "server_custom_note" else "server_default_note",
+                            language
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textMuted
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                     ShopinoTextField(
                         value = serverUrlDraft,
-                        onValueChange = { serverUrlDraft = it },
+                        onValueChange = {
+                            serverUrlDraft = it
+                            serverUrlError = null
+                        },
                         label = ShopinoStrings.t("server_url", language),
-                        leadingIcon = Icons.Outlined.Dns
+                        leadingIcon = Icons.Outlined.Dns,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
                     )
+                    serverUrlError?.let { reason ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = ShopinoStrings.t(reason.messageKey(), language),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colors.danger
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = ShopinoStrings.t("server_change_logs_out", language),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textMuted
+                    )
+                    if (isBaseUrlOverridden) {
+                        TextButton(onClick = {
+                            onResetBaseUrl()
+                            showServerDialog = false
+                        }) {
+                            Text(
+                                text = ShopinoStrings.t("server_reset_default", language),
+                                color = colors.accentViolet
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onUpdateBaseUrl(serverUrlDraft)
-                        showServerDialog = false
+                        val failure = onUpdateBaseUrl(serverUrlDraft)
+                        if (failure == null) showServerDialog = false else serverUrlError = failure
                     }
                 ) {
                     Text(
@@ -375,9 +434,9 @@ fun PreviewLoginScreenPersianDark() {
         LoginScreen(
             isLoading = false,
             errorMessage = null,
-            currentBaseUrl = "http://10.0.2.2:3000/",
+            currentBaseUrl = "https://shopino-cloud.ir/",
             onLoginSubmit = { _, _ -> },
-            onUpdateBaseUrl = {},
+            onUpdateBaseUrl = { null },
             onToggleLanguage = {},
             onToggleTheme = {}
         )
@@ -391,9 +450,9 @@ fun PreviewLoginScreenEnglishLight() {
         LoginScreen(
             isLoading = false,
             errorMessage = null,
-            currentBaseUrl = "http://10.0.2.2:3000/",
+            currentBaseUrl = "https://shopino-cloud.ir/",
             onLoginSubmit = { _, _ -> },
-            onUpdateBaseUrl = {},
+            onUpdateBaseUrl = { null },
             onToggleLanguage = {},
             onToggleTheme = {}
         )

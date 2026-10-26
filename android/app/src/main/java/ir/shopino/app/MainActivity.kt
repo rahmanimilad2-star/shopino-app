@@ -1,6 +1,5 @@
 package ir.shopino.app
 
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +31,10 @@ import androidx.compose.ui.unit.dp
 import ir.shopino.app.data.auth.AuthFailure
 import ir.shopino.app.data.auth.AuthRepository
 import ir.shopino.app.data.auth.AuthUser
+import ir.shopino.app.data.auth.SecureTokenStore
+import ir.shopino.app.data.auth.ServerConfigStore
+import ir.shopino.app.data.auth.ServerUrl
+import ir.shopino.app.i18n.ShopinoStrings
 import ir.shopino.app.ui.screens.auth.LoginScreen
 import ir.shopino.app.ui.theme.ShopinoTheme
 import ir.shopino.app.util.AppLanguage
@@ -53,7 +56,10 @@ fun ShopinoRootApp() {
 
     var language by remember { mutableStateOf(AppLanguage.FA) }
     var darkTheme by remember { mutableStateOf(true) }
-    var baseUrl by remember { mutableStateOf(BuildConfig.DEFAULT_BASE_URL) }
+    // Compiled default (BuildConfig, from android/gradle.properties) unless the user saved a validated override.
+    val serverConfig = remember { ServerConfigStore(context, allowDevelopmentHosts = BuildConfig.DEBUG) }
+    val tokenStore = remember { SecureTokenStore(context) }
+    var baseUrl by remember { mutableStateOf(serverConfig.readOverride() ?: BuildConfig.DEFAULT_BASE_URL) }
     var user by remember { mutableStateOf<AuthUser?>(null) }
     var checkingSession by remember { mutableStateOf(true) }
     var sessionRestoreFailed by remember { mutableStateOf(false) }
@@ -61,7 +67,7 @@ fun ShopinoRootApp() {
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val repository = remember(baseUrl, context) {
-        AuthRepository(context, baseUrl)
+        AuthRepository(context, baseUrl, tokenStore)
     }
 
     LaunchedEffect(repository) {
@@ -169,22 +175,31 @@ fun ShopinoRootApp() {
                             }
                         }
                     },
+                    isBaseUrlOverridden = baseUrl != BuildConfig.DEFAULT_BASE_URL,
                     onUpdateBaseUrl = { proposed ->
-                        val trimmed = proposed.trim()
-                        val uri = Uri.parse(trimmed)
-                        if (
-                            (uri.scheme == "https" || uri.scheme == "http") &&
-                            !uri.host.isNullOrBlank()
-                        ) {
-                            baseUrl = if (trimmed.endsWith("/")) trimmed else "$trimmed/"
-                            errorMessage = null
-                        } else {
-                            errorMessage = if (language == AppLanguage.FA) {
-                                "آدرس سرور معتبر نیست؛ آدرس کامل http یا https وارد کن."
-                            } else {
-                                "Invalid server URL. Enter a complete http or https URL."
+                        when (val result = ServerUrl.normalize(proposed, BuildConfig.DEBUG)) {
+                            is ServerUrl.Result.Invalid -> result.reason
+                            is ServerUrl.Result.Valid -> {
+                                if (result.origin != baseUrl) {
+                                    // New server: the previous server's token must never be reused.
+                                    tokenStore.clear()
+                                    if (result.origin == BuildConfig.DEFAULT_BASE_URL) {
+                                        serverConfig.clearOverride()
+                                    } else {
+                                        serverConfig.writeOverride(result.origin)
+                                    }
+                                    baseUrl = result.origin
+                                }
+                                errorMessage = null
+                                null
                             }
                         }
+                    },
+                    onResetBaseUrl = {
+                        tokenStore.clear()
+                        serverConfig.clearOverride()
+                        baseUrl = BuildConfig.DEFAULT_BASE_URL
+                        errorMessage = null
                     },
                     onToggleLanguage = {
                         language = if (language == AppLanguage.FA) {
@@ -244,8 +259,16 @@ private fun SessionRestoreError(
     }
 }
 private fun readableError(error: Exception, language: AppLanguage): String {
-    if (error is AuthFailure && !error.message.isNullOrBlank()) {
-        return error.message!!
+    if (error is AuthFailure) {
+        val code = error.httpCode
+        val key = when {
+            code == 401 -> "err_invalid_credentials"
+            code == 429 -> "err_too_many"
+            code != null && code >= 500 -> "err_server"
+            else -> null
+        }
+        if (key != null) return ShopinoStrings.t(key, language)
+        if (!error.message.isNullOrBlank()) return error.message!!
     }
 
     return when {
@@ -262,6 +285,11 @@ private fun readableError(error: Exception, language: AppLanguage): String {
     }
 }
 
+/**
+ * TEMPORARY post-login screen (pre-existing in this snapshot). It is shown only after a server-confirmed login
+ * or a server-validated restored session. The real AppShell/dashboard is NOT part of this source snapshot and
+ * must replace this composable; see the integration notes delivered with the patch.
+ */
 @Composable
 private fun AuthenticatedLanding(
     user: AuthUser,
