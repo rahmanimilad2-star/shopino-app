@@ -7,6 +7,10 @@ coverage/
 .env*
 !.env.example
 data/
+!android/app/src/main/java/ir/shopino/app/data/
+android/app/src/main/java/ir/shopino/app/data/*
+!android/app/src/main/java/ir/shopino/app/data/auth/
+!android/app/src/main/java/ir/shopino/app/data/auth/**
 backups/
 *.sqlite
 *.sqlite3
