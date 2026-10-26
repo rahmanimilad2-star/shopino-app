@@ -30,6 +30,8 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run security tests
+        env:
+          SESSION_SECRET: "ci-test-session-secret-0123456789-abcdef"
         run: bun run test
 
       - name: Type-check project
