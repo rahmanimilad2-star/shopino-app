@@ -4,6 +4,8 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
+import kotlinx.serialization.json.JsonElement
 
 interface AuthApi {
     @POST("api/auth/login")
@@ -16,4 +18,9 @@ interface AuthApi {
 
     @POST("api/auth/logout")
     suspend fun logout(): Response<Unit>
+
+    @GET("{path}")
+    suspend fun businessData(
+        @Path(value = "path", encoded = true) path: String
+    ): Response<JsonElement>
 }

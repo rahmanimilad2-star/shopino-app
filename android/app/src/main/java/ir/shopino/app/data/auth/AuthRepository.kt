@@ -6,6 +6,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.JsonElement
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.MediaType.Companion.toMediaType
@@ -104,6 +105,11 @@ class AuthRepository(
             tokenStore.clear()
         }
     }
+
+    suspend fun loadBusinessData(path: String): JsonElement =
+        withContext(Dispatchers.IO) {
+            api.businessData(path).requireBody(path)
+        }
 
     private fun <T : Any> Response<T>.requireBody(operation: String): T {
         if (isSuccessful) {
