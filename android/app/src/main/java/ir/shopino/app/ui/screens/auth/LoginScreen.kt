@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Lock
@@ -66,7 +67,7 @@ fun LoginScreen(
     isLoading: Boolean,
     errorMessage: String?,
     currentBaseUrl: String,
-    onLoginSubmit: (username: String, password: String) -> Unit,
+    onLoginSubmit: (email: String, password: String) -> Unit,
     onUpdateBaseUrl: (String) -> Unit,
     onToggleLanguage: () -> Unit,
     onToggleTheme: () -> Unit,
@@ -76,7 +77,7 @@ fun LoginScreen(
     val colors = ShopinoTheme.colors
     val language = ShopinoTheme.language
 
-    var username by remember { mutableStateOf("admin") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf(false) }
@@ -235,12 +236,12 @@ fun LoginScreen(
                 }
 
                 ShopinoTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = ShopinoStrings.t("username", language),
-                    leadingIcon = Icons.Outlined.Person,
+                    value = email,
+                    onValueChange = { email = it },
+                    label = ShopinoStrings.t("email", language),
+                    leadingIcon = Icons.Outlined.Email,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
+                        keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     )
                 )
@@ -280,8 +281,8 @@ fun LoginScreen(
                     } else {
                         ShopinoStrings.t("sign_in", language)
                     },
-                    onClick = { onLoginSubmit(username, password) },
-                    enabled = !isLoading && username.isNotBlank() && password.isNotBlank(),
+                    onClick = { onLoginSubmit(email.trim(), password) },
+                    enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
                 )
 

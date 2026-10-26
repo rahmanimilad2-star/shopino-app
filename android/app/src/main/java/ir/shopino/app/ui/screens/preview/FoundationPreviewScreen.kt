@@ -63,10 +63,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import ir.shopino.app.data.model.CustomerDto
-import ir.shopino.app.data.model.DailySalesPointDto
-import ir.shopino.app.data.model.ProductDto
-import ir.shopino.app.data.model.SalesVsPaymentPointDto
+import ir.shopino.app.ui.model.PreviewCustomer
+import ir.shopino.app.ui.model.PreviewDailySalesPoint
+import ir.shopino.app.ui.model.PreviewProduct
+import ir.shopino.app.ui.model.PreviewSalesVsPaymentPoint
 import ir.shopino.app.i18n.ShopinoStrings
 import ir.shopino.app.ui.components.BadgeTone
 import ir.shopino.app.ui.components.ShopinoButton
@@ -95,23 +95,23 @@ object Stage2PreviewSampleData {
     const val lowStockCount = 4
 
     val salesOverTime = listOf(
-        DailySalesPointDto(date = "2026-04-01", sales = 14_200_000L, received = 11_000_000L),
-        DailySalesPointDto(date = "2026-04-05", sales = 19_800_000L, received = 16_500_000L),
-        DailySalesPointDto(date = "2026-04-10", sales = 17_400_000L, received = 14_900_000L),
-        DailySalesPointDto(date = "2026-04-15", sales = 26_100_000L, received = 21_200_000L),
-        DailySalesPointDto(date = "2026-04-20", sales = 31_500_000L, received = 24_800_000L),
-        DailySalesPointDto(date = "2026-04-25", sales = 39_500_000L, received = 27_800_000L)
+        PreviewDailySalesPoint(date = "2026-04-01", sales = 14_200_000L, received = 11_000_000L),
+        PreviewDailySalesPoint(date = "2026-04-05", sales = 19_800_000L, received = 16_500_000L),
+        PreviewDailySalesPoint(date = "2026-04-10", sales = 17_400_000L, received = 14_900_000L),
+        PreviewDailySalesPoint(date = "2026-04-15", sales = 26_100_000L, received = 21_200_000L),
+        PreviewDailySalesPoint(date = "2026-04-20", sales = 31_500_000L, received = 24_800_000L),
+        PreviewDailySalesPoint(date = "2026-04-25", sales = 39_500_000L, received = 27_800_000L)
     )
 
     val salesVsPayments = listOf(
-        SalesVsPaymentPointDto(label = "W1", sales = 28_500_000L, payments = 24_000_000L),
-        SalesVsPaymentPointDto(label = "W2", sales = 34_200_000L, payments = 27_400_000L),
-        SalesVsPaymentPointDto(label = "W3", sales = 41_000_000L, payments = 31_800_000L),
-        SalesVsPaymentPointDto(label = "W4", sales = 44_800_000L, payments = 33_000_000L)
+        PreviewSalesVsPaymentPoint(label = "W1", sales = 28_500_000L, payments = 24_000_000L),
+        PreviewSalesVsPaymentPoint(label = "W2", sales = 34_200_000L, payments = 27_400_000L),
+        PreviewSalesVsPaymentPoint(label = "W3", sales = 41_000_000L, payments = 31_800_000L),
+        PreviewSalesVsPaymentPoint(label = "W4", sales = 44_800_000L, payments = 33_000_000L)
     )
 
     val sampleProducts = listOf(
-        ProductDto(
+        PreviewProduct(
             id = 101,
             name = "روغن موتور سینتتیک ۵W-40 بهران",
             sku = "OIL-5W40-BH",
@@ -122,7 +122,7 @@ object Stage2PreviewSampleData {
             stockQuantity = 42,
             minStockLevel = 10
         ),
-        ProductDto(
+        PreviewProduct(
             id = 102,
             name = "فیلتر هوای کابین نانو سرامیکی",
             sku = "FLT-CAB-204",
@@ -133,7 +133,7 @@ object Stage2PreviewSampleData {
             stockQuantity = 3,
             minStockLevel = 8
         ),
-        ProductDto(
+        PreviewProduct(
             id = 103,
             name = "لنت ترمز جلو سرامیکی پارس",
             sku = "BRK-PAD-900",
@@ -147,7 +147,7 @@ object Stage2PreviewSampleData {
     )
 
     val sampleCustomers = listOf(
-        CustomerDto(
+        PreviewCustomer(
             id = 201,
             name = "بازرگانی پخش قطعات البرز",
             phone = "09123456789",
@@ -157,7 +157,7 @@ object Stage2PreviewSampleData {
             totalPaid = 66_000_000L,
             currentBalance = 18_500_000L
         ),
-        CustomerDto(
+        PreviewCustomer(
             id = 202,
             name = "تعمیرگاه تخصصی محمدی",
             phone = "09351122334",
@@ -740,7 +740,7 @@ private fun QuickActionPill(
 }
 
 @Composable
-private fun ProductPreviewCard(product: ProductDto) {
+private fun ProductPreviewCard(product: PreviewProduct) {
     val colors = ShopinoTheme.colors
     val language = ShopinoTheme.language
 
@@ -833,7 +833,7 @@ private fun ProductPreviewCard(product: ProductDto) {
 }
 
 @Composable
-private fun CustomerPreviewCard(customer: CustomerDto) {
+private fun CustomerPreviewCard(customer: PreviewCustomer) {
     val colors = ShopinoTheme.colors
     val language = ShopinoTheme.language
 

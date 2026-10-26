@@ -53,8 +53,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import ir.shopino.app.data.model.DailySalesPointDto
-import ir.shopino.app.data.model.SalesVsPaymentPointDto
+import ir.shopino.app.ui.model.PreviewDailySalesPoint
+import ir.shopino.app.ui.model.PreviewSalesVsPaymentPoint
 import ir.shopino.app.ui.theme.ShopinoTheme
 import ir.shopino.app.util.ShopinoFormatters
 
@@ -354,7 +354,7 @@ fun ShopinoTextField(
  */
 @Composable
 fun ShopinoSalesAreaChart(
-    points: List<DailySalesPointDto>,
+    points: List<PreviewDailySalesPoint>,
     modifier: Modifier = Modifier,
     chartHeight: Dp = 185.dp
 ) {
@@ -482,7 +482,7 @@ fun ShopinoSalesAreaChart(
  */
 @Composable
 fun ShopinoSalesVsPaymentsBarChart(
-    items: List<SalesVsPaymentPointDto>,
+    items: List<PreviewSalesVsPaymentPoint>,
     modifier: Modifier = Modifier,
     chartHeight: Dp = 180.dp
 ) {
